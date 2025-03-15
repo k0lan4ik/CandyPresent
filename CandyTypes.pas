@@ -1,0 +1,458 @@
+unit CandyTypes;
+
+interface
+type
+  TCandysInf = record
+    PKey: Integer;
+    TypeCandyKet: Integer;
+    Name: String[200];
+    Cost: Integer;
+    Weigth: Real;
+  end;
+
+  TCandysAdr = ^TCandys;
+  TCandysAdrs = array of TCandysAdr;
+
+  TCandys = record
+    Inf: TCandysInf;
+    Adr: TCandysAdr;
+  end;
+
+  TTypeOfCandysInf = record
+    PKey: Integer;
+    Name: String[200];
+  end;
+
+  TTypeOfCandysAdr = ^TTypeOfCandys;
+  TTypeOfCandysAdrs = array of TTypeOfCandysAdr;
+
+  TTypeOfCandys = record
+    Inf: TTypeOfCandysInf;
+    Adr: TTypeOfCandysAdr;
+  end;
+
+  TCandyCompare = function(const compare1, compare2: TCandysInf): Integer;
+  TCandyTypeCompare = function(const compare1,
+    compare2: TTypeOfCandysInf): Integer;
+
+procedure Sort(var Head: TCandysAdr; Compare: TCandyCompare); overload;
+procedure Sort(var Head: TTypeOfCandysAdr; Compare: TCandyTypeCompare);
+  overload;
+
+function Find(Head: TCandysAdr; const Param :TCandysInf; Compare: TCandyCompare ): TCandysAdrs;overload;
+function Find(Head: TTypeOfCandysAdr; const Param :TTypeOfCandysInf; Compare: TCandyTypeCompare ): TTypeOfCandysAdrs;overload;
+
+procedure Add(Head: TCandysAdr; Element: TCandysInf);overload;
+procedure Add(Head: TTypeOfCandysAdr; Element: TTypeOfCandysInf);overload;
+
+procedure Delete(Head: TCandysAdr; PK: Integer);overload;
+procedure Delete(Head: TTypeOfCandysAdr; PK: Integer);overload;
+
+procedure Clear(var Head: TCandysAdr);overload;
+procedure Clear(var Head: TTypeOfCandysAdr);overload;
+
+// компораторы для TCandys
+function CompareCnPKey(const compare1, compare2: TCandysInf): Integer;
+function CompareCnTypeCandyKet(const compare1, compare2: TCandysInf): Integer;
+function CompareCnName(const compare1, compare2: TCandysInf): Integer;
+function CompareCnCost(const compare1, compare2: TCandysInf): Integer;
+function CompareCnWeigth(const compare1, compare2: TCandysInf): Integer;
+
+// компораторы для TTypeOfCandys
+function CompareTCPKey(const compare1, compare2: TTypeOfCandysInf): Integer;
+function CompareTCName(const compare1, compare2: TTypeOfCandysInf): Integer;
+
+implementation
+
+// для самих сладостей
+// компораторы
+function CompareCnPKey(const compare1, compare2: TCandysInf): Integer;
+begin
+  if compare1.PKey > compare2.PKey then
+    Result := 1
+  else if compare1.PKey < compare2.PKey then
+    Result := -1
+  else
+    Result := 0
+end;
+
+function CompareCnTypeCandyKet(const compare1, compare2: TCandysInf)
+  : Integer; overload;
+begin
+  if compare1.TypeCandyKet > compare2.TypeCandyKet then
+    Result := 1
+  else if compare1.TypeCandyKet < compare2.TypeCandyKet then
+    Result := -1
+  else
+    Result := 0
+end;
+
+function CompareCnName(const compare1, compare2: TCandysInf): Integer;
+begin
+  if compare1.Name > compare2.Name then
+    Result := 1
+  else if compare1.Name < compare2.Name then
+    Result := -1
+  else
+    Result := 0
+end;
+
+function CompareCnCost(const compare1, compare2: TCandysInf): Integer;
+begin
+  if compare1.Cost > compare2.Cost then
+    Result := 1
+  else if compare1.Cost < compare2.Cost then
+    Result := -1
+  else
+    Result := 0
+end;
+
+function CompareCnWeigth(const compare1, compare2: TCandysInf): Integer;
+begin
+  if compare1.Name > compare2.Name then
+    Result := 1
+  else if compare1.Name < compare2.Name then
+    Result := -1
+  else
+    Result := 0
+end;
+
+//поиск
+function Find(Head: TCandysAdr; const Param :TCandysInf; Compare: TCandyCompare ): TCandysAdrs;overload;
+var
+  Current: TCandysAdr;
+  i: Integer;
+begin
+ Current := Head;
+  SetLength(Result, 4);
+  i := 0;
+  while Current <> nil do
+  begin
+    if Compare(Current^.Inf, Param) = 0 then
+    begin
+      if High(Result) < i then
+        SetLength(Result, i * 2);
+      Result[i] := Current;
+      Inc(i);
+    end;
+    Current := Current^.Adr;
+  end;
+  Result[i] := nil;
+end;
+
+//добавление в конец
+procedure Add(Head: TCandysAdr; Element: TCandysInf);overload;
+var
+  Temp: TCandysAdr;
+begin
+  Temp := Head;
+  While Temp^.Adr <> nil  do
+    Temp := Temp^.Adr;
+  New(Temp^.Adr);
+  Temp := Temp^.Adr;
+  Temp^.Inf := Element;
+  Temp^.Adr := nil;
+end;
+
+//удаление
+procedure Delete(Head: TCandysAdr; PK: Integer);overload;
+var
+  Deleted, Prev: TCandysAdr;
+begin
+  Deleted := Head;
+  while (Deleted^.Adr <> nil) or (Deleted^.Adr^.Inf.PKey <> PK) do
+    Deleted := Deleted^.Adr;
+  if Deleted^.Adr <> nil then
+  begin
+    Prev := Deleted^.Adr;
+    Deleted^.Adr := Prev^.Adr;
+    Dispose(Prev);
+  end;
+end;
+
+
+// методы сортировки
+function Split(List: TCandysAdr): TCandysAdr; overload;
+var
+  Fast, Slow, Prev: TCandysAdr;
+begin
+  Result := nil;
+  if (List <> nil) and (List^.Adr <> nil) then
+  begin
+    Slow := List;
+    Fast := List^.Adr;
+    Prev := nil;
+
+    while (Fast <> nil) and (Fast^.Adr <> nil) do
+    begin
+      Prev := Slow;
+      Slow := Slow^.Adr;
+      Fast := Fast^.Adr.Adr;
+    end;
+
+    if Prev <> nil then
+      Prev^.Adr := nil;
+
+    Result := Slow;
+  end;
+end;
+
+function Merge(Left, Right: TCandysAdr; Compare: TCandyCompare)
+  : TCandysAdr; overload;
+var
+  Temp, Head: TCandysAdr;
+begin
+  Head := nil;
+  Temp := nil;
+
+  while (Left <> nil) and (Right <> nil) do
+  begin
+    if Compare(Left^.Inf, Right^.Inf) <= 0 then
+    begin
+      if Head = nil then
+      begin
+        Head := Left;
+        Temp := Head;
+      end
+      else
+      begin
+        Temp^.Adr := Left;
+        Temp := Temp^.Adr;
+      end;
+      Left := Left^.Adr;
+    end
+    else
+    begin
+      if Head = nil then
+      begin
+        Head := Right;
+        Temp := Head;
+      end
+      else
+      begin
+        Temp^.Adr := Right;
+        Temp := Temp^.Adr;
+      end;
+      Right := Right^.Adr;
+    end;
+  end;
+
+  if Left <> nil then
+    Temp^.Adr := Left
+  else if Right <> nil then
+    Temp^.Adr := Right;
+
+  Result := Head;
+end;
+
+procedure Sort(var Head: TCandysAdr; Compare: TCandyCompare); overload;
+var
+  Left, Right: TCandysAdr;
+begin
+  if (Head <> nil) and (Head^.Adr <> nil) then
+  begin
+    Left := Head;
+    Right := Split(Head);
+
+    Sort(Left, Compare);
+    Sort(Right, Compare);
+
+    Head := Merge(Left, Right, Compare);
+  end;
+end;
+
+//очистка памяти
+procedure Clear(var Head: TCandysAdr);overload;
+var
+  Temp: TCandysAdr;
+begin
+  while Head <> nil do
+  begin
+    Temp := Head^.Adr;
+    Dispose(Head);
+    Head := Temp;
+  end;
+end;
+
+// для типов сладостей
+// компораторы
+function CompareTCPKey(const compare1, compare2: TTypeOfCandysInf)
+  : Integer; overload;
+begin
+  if compare1.PKey > compare2.PKey then
+    Result := 1
+  else if compare1.PKey < compare2.PKey then
+    Result := -1
+  else
+    Result := 0
+end;
+
+function CompareTCName(const compare1, compare2: TTypeOfCandysInf)
+  : Integer; overload;
+begin
+  if compare1.Name > compare2.Name then
+    Result := 1
+  else if compare1.Name < compare2.Name then
+    Result := -1
+  else
+    Result := 0
+end;
+
+//поиск
+function Find(Head: TTypeOfCandysAdr; const Param :TTypeOfCandysInf; Compare: TCandyTypeCompare ): TTypeOfCandysAdrs;overload;
+var
+  Current: TTypeOfCandysAdr;
+  i: Integer;
+begin
+  Current := Head;
+  SetLength(Result, 4);
+  i := 0;
+  while Current <> nil do
+  begin
+    if Compare(Current^.Inf, Param) = 0 then
+    begin
+      if High(Result) < i then
+        SetLength(Result, i * 2);
+      Result[i] := Current;
+      Inc(i);
+    end;
+    Current := Current^.Adr;
+  end;
+  Result[i] := nil;
+end;
+
+//добавление в конец
+procedure Add(Head: TTypeOfCandysAdr; Element: TTypeOfCandysInf);overload;
+var
+  Temp: TTypeOfCandysAdr;
+begin
+  Temp := Head;
+  While Temp^.Adr <> nil  do
+    Temp := Temp^.Adr;
+  New(Temp^.Adr);
+  Temp := Temp^.Adr;
+  Temp^.Inf := Element;
+  Temp^.Adr := nil;
+end;
+
+//удаление
+procedure Delete(Head: TTypeOfCandysAdr; PK: Integer);overload;
+var
+  Deleted, Prev: TTypeOfCandysAdr;
+begin
+  Deleted := Head;
+  while (Deleted^.Adr <> nil) and (Deleted^.Adr^.Inf.PKey <> PK) do
+    Deleted := Deleted^.Adr;
+  if Deleted^.Adr <> nil then
+  begin
+    Prev := Deleted^.Adr;
+    Deleted^.Adr := Prev^.Adr;
+    Dispose(Prev);
+  end;
+end;
+
+// методы сортировки
+function Split(List: TTypeOfCandysAdr): TTypeOfCandysAdr; overload;
+var
+  Fast, Slow, Prev: TTypeOfCandysAdr;
+begin
+  Result := nil;
+  if (List <> nil) and (List^.Adr <> nil) then
+  begin
+    Slow := List;
+    Fast := List;
+    Prev := nil;
+
+    while (Fast <> nil) and (Fast^.Adr <> nil) do
+    begin
+      Prev := Slow;
+      Slow := Slow^.Adr;
+      Fast := Fast^.Adr.Adr;
+    end;
+
+    if Prev <> nil then
+      Prev^.Adr := nil;
+
+    Result := Slow;
+  end;
+end;
+
+function Merge(Left, Right: TTypeOfCandysAdr; Compare: TCandyTypeCompare)
+  : TTypeOfCandysAdr; overload;
+var
+  Temp, Head: TTypeOfCandysAdr;
+begin
+  Head := nil;
+  Temp := nil;
+
+  while (Left <> nil) and (Right <> nil) do
+  begin
+    if Compare(Left^.Inf, Right^.Inf) <= 0 then
+    begin
+      if Head = nil then
+      begin
+        Head := Left;
+        Temp := Head;
+      end
+      else
+      begin
+        Temp^.Adr := Left;
+        Temp := Temp^.Adr;
+      end;
+      Left := Left^.Adr;
+    end
+    else
+    begin
+      if Head = nil then
+      begin
+        Head := Right;
+        Temp := Head;
+      end
+      else
+      begin
+        Temp^.Adr := Right;
+        Temp := Temp^.Adr;
+      end;
+      Right := Right^.Adr;
+    end;
+  end;
+
+  if Left <> nil then
+    Temp^.Adr := Left
+  else if Right <> nil then
+    Temp^.Adr := Right;
+
+  Result := Head;
+end;
+
+procedure Sort(var Head: TTypeOfCandysAdr; Compare: TCandyTypeCompare);
+  overload;
+var
+  Left, Right: TTypeOfCandysAdr;
+begin
+  if (Head <> nil) and (Head^.Adr <> nil) then
+  begin
+    Left := Head;
+    Right := Split(Head);
+
+    Sort(Left, Compare);
+    Sort(Right, Compare);
+
+    Head := Merge(Left, Right, Compare);
+  end;
+end;
+
+//очистка памяти
+procedure Clear(var Head: TTypeOfCandysAdr);overload;
+var
+  Temp: TTypeOfCandysAdr;
+begin
+  while Head <> nil do
+  begin
+    Temp := Head^.Adr;
+    Dispose(Head);
+    Head := Temp;
+  end;
+end;
+
+end.

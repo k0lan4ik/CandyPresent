@@ -42,7 +42,6 @@ begin
     p^.Inf.PKey := pkType;
     Add(p, p^.Inf);
     inc(pkType);
-    Writeln;
   end;
 end;
 
@@ -69,8 +68,6 @@ begin
     Readln(p^.Inf.Weigth);
     p^.Inf.PKey := pkCandy;
     Add(p, p^.Inf);
-    inc(pkCandy);
-    Writeln;
   end;
 
 end;
@@ -79,11 +76,11 @@ procedure WriteTypeList(p: TTypeOfCandysAdr);
 var
   temp: TTypeOfCandysAdr;
 begin
-  Writeln('  pk                 имя');
+  Writeln('pk ---- имя');
   while p^.Adr <> nil do
   begin
     p := p^.Adr;
-    Writeln(p^.Inf.PKey:4, p^.Inf.Name:20);
+    Writeln(p^.Inf.PKey, ' ---- ', p^.Inf.Name);
   end;
 end;
 
@@ -91,14 +88,14 @@ procedure WriteCandyList(p: TCandysAdr);
 var
   temp: TCandysAdr;
 begin
-  Writeln(' pk                    имя                    тип       стоимость       вес');
+  Writeln('pk ---- имя ---- тип ---- стоимость ---- вес');
   while p^.Adr <> nil do
   begin
     p := p^.Adr;
     headType^.Inf.PKey := p^.Inf.TypeCandyKet;
-    Writeln(p^.Inf.PKey:4, p^.Inf.Name:20,
-      Find(headType, headType^.Inf, CompareTCPKey)[0]^.Inf.Name:20,
-      p^.Inf.Cost:7, p^.Inf.Weigth:7:2);
+    Writeln(p^.Inf.PKey, ' ---- ', p^.Inf.Name, ' ---- ',
+      Find(headType, headType^.Inf, CompareTCPKey)[0]^.Inf.Name, ' ---- ',
+      p^.Inf.Cost, ' ---- ', p^.Inf.Weigth);
   end;
 end;
 

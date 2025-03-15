@@ -79,7 +79,7 @@ procedure WriteTypeList(p: TTypeOfCandysAdr);
 var
   temp: TTypeOfCandysAdr;
 begin
-  Writeln('  pk                 имя');
+  Writeln(' pk                   имя');
   while p^.Adr <> nil do
   begin
     p := p^.Adr;
