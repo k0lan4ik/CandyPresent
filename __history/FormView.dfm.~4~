@@ -1,0 +1,159 @@
+object Form2: TForm2
+  Left = 0
+  Top = 0
+  Caption = 'Form2'
+  ClientHeight = 584
+  ClientWidth = 934
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  OnClose = FormClose
+  OnCreate = FormCreate
+  TextHeight = 15
+  object MainMenu: TPanel
+    Left = 0
+    Top = 0
+    Width = 934
+    Height = 584
+    Align = alClient
+    TabOrder = 0
+    object btMenu1: TButton
+      Left = 312
+      Top = 24
+      Width = 259
+      Height = 33
+      Action = menu1
+      Caption = '1. '#1063#1090#1077#1085#1080#1077' '#1076#1072#1085#1085#1099#1093' '#1080#1079' '#1092#1072#1081#1083#1072
+      TabOrder = 0
+    end
+    object btMenu10: TButton
+      Left = 312
+      Top = 528
+      Width = 259
+      Height = 33
+      Action = menu10
+      Caption = '10. '#1042#1099#1093#1086#1076' '#1089' '#1089#1086#1093#1088#1072#1085#1077#1085#1080#1077#1084' '#1080#1079#1084#1077#1085#1077#1085#1080#1081
+      TabOrder = 1
+    end
+    object btMenu2: TButton
+      Left = 312
+      Top = 80
+      Width = 259
+      Height = 33
+      Action = menu2
+      Caption = '2. '#1055#1088#1086#1089#1084#1086#1090#1088' '#1074#1089#1077#1075#1086' '#1089#1087#1080#1089#1082#1072
+      TabOrder = 2
+    end
+    object btMenu3: TButton
+      Left = 312
+      Top = 136
+      Width = 259
+      Height = 33
+      Action = menu3
+      Caption = '3. '#1055#1088#1086#1089#1084#1086#1090#1088' '#1074#1089#1077#1075#1086' '#1089#1087#1080#1089#1082#1072
+      TabOrder = 3
+    end
+    object btMenu4: TButton
+      Left = 312
+      Top = 192
+      Width = 259
+      Height = 33
+      Action = menu4
+      Caption = '4. '#1055#1086#1080#1089#1082' '#1076#1072#1085#1085#1099#1093' '#1089' '#1080#1089#1087#1086#1083#1100#1079#1086#1074#1072#1085#1080#1077#1084' '#1092#1080#1083#1100#1090#1088#1086#1074
+      TabOrder = 4
+    end
+    object btMenu5: TButton
+      Left = 312
+      Top = 248
+      Width = 259
+      Height = 33
+      Action = menu5
+      Caption = '5. '#1044#1086#1073#1072#1074#1083#1077#1085#1080#1077' '#1076#1072#1085#1085#1099#1093' '#1074' '#1089#1087#1080#1089#1086#1082
+      TabOrder = 5
+    end
+    object btMenu6: TButton
+      Left = 312
+      Top = 304
+      Width = 259
+      Height = 33
+      Action = menu6
+      Caption = '6. '#1059#1076#1072#1083#1077#1085#1080#1077' '#1076#1072#1085#1085#1099#1093' '#1080#1079' '#1089#1087#1080#1089#1082#1072
+      TabOrder = 6
+    end
+    object btMenu7: TButton
+      Left = 312
+      Top = 360
+      Width = 259
+      Height = 33
+      Action = menu7
+      Caption = '7. '#1056#1077#1076#1072#1082#1090#1080#1088#1086#1074#1072#1085#1080#1077' '#1076#1072#1085#1085#1099#1093
+      TabOrder = 7
+    end
+    object btMenu8: TButton
+      Left = 312
+      Top = 416
+      Width = 259
+      Height = 33
+      Action = menu8
+      Caption = '8. '#1057#1086#1079#1076#1072#1085#1080#1077' '#1085#1086#1074#1086#1075#1086#1076#1085#1077#1075#1086' '#1087#1086#1076#1072#1088#1082#1072
+      TabOrder = 8
+    end
+    object btMenu9: TButton
+      Left = 312
+      Top = 472
+      Width = 259
+      Height = 33
+      Action = menu9
+      Caption = '9. '#1042#1099#1093#1086#1076' '#1073#1077#1079' '#1089#1086#1093#1088#1072#1085#1077#1085#1080#1103' '#1080#1079#1084#1077#1085#1077#1085#1080#1081
+      TabOrder = 9
+    end
+  end
+  object ActionList1: TActionList
+    Left = 760
+    Top = 312
+    object menu1: TAction
+      Category = 'Menu'
+      Caption = 'menu1'
+      OnExecute = menu1Execute
+    end
+    object menu2: TAction
+      Category = 'Menu'
+      Caption = 'menu2'
+    end
+    object menu3: TAction
+      Category = 'Menu'
+      Caption = 'menu3'
+    end
+    object menu4: TAction
+      Category = 'Menu'
+      Caption = 'menu4'
+    end
+    object menu5: TAction
+      Category = 'Menu'
+      Caption = 'menu5'
+    end
+    object menu6: TAction
+      Category = 'Menu'
+      Caption = 'menu6'
+    end
+    object menu7: TAction
+      Category = 'Menu'
+      Caption = 'menu7'
+    end
+    object menu8: TAction
+      Category = 'Menu'
+      Caption = 'menu8'
+    end
+    object menu9: TAction
+      Category = 'Menu'
+      Caption = 'menu9'
+    end
+    object menu10: TAction
+      Category = 'Menu'
+      Caption = 'menu10'
+    end
+  end
+end

@@ -1,0 +1,98 @@
+unit FormView;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, System.Actions,
+  Vcl.ActnList, Vcl.ExtCtrls, FileWork, CandyTypes;
+
+type
+  TForm2 = class(TForm)
+    btMenu1: TButton;
+    btMenu2: TButton;
+    btMenu3: TButton;
+    btMenu4: TButton;
+    btMenu5: TButton;
+    btMenu10: TButton;
+    btMenu9: TButton;
+    btMenu8: TButton;
+    btMenu7: TButton;
+    btMenu6: TButton;
+    MainMenu: TPanel;
+    ActionList1: TActionList;
+    menu1: TAction;
+    menu2: TAction;
+    menu3: TAction;
+    menu4: TAction;
+    menu5: TAction;
+    menu6: TAction;
+    menu7: TAction;
+    menu8: TAction;
+    menu9: TAction;
+    menu10: TAction;
+    ChooseList: TPanel;
+    Button1: TButton;
+    Button2: TButton;
+    chooseCandy: TAction;
+    chooseTypeCandy: TAction;
+    procedure menu1Execute(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure chooseCandyExecute(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  headType: TTypeOfCandysAdr;
+  headCandy: TCandysAdr;
+  info: TTypeOfCandysAdrs;
+  pkType, pkCandy, i, ChoosedList, funcNumer: Integer;
+  Form2: TForm2;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm2.chooseCandyExecute(Sender: TObject);
+begin
+  ChoosedList := 1;
+
+end;
+
+procedure TForm2.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+    Clear(headType);
+    Clear(headCandy);
+end;
+
+procedure TForm2.FormCreate(Sender: TObject);
+begin
+  New(headType);
+  headType^.Adr := nil;
+
+  New(headCandy);
+  headCandy^.Adr := nil;
+end;
+
+procedure TForm2.menu1Execute(Sender: TObject);
+var
+  val1, val2: Integer;
+begin
+  val1 := LoadFromFile(headType, 'type.dcu');
+  val2 := LoadFromFile(headCandy, 'candy.dcu');
+  if (val1 <> -1) and (val2 <> -1) then
+  begin
+    ShowMessage('Чтение с файла прошло успешно');
+    pkType := val1;
+    pkCandy := val2;
+  end
+  else
+    ShowMessage('Ошибка чтение с файла');
+  TAction(Sender).Enabled := false;
+end;
+
+end.

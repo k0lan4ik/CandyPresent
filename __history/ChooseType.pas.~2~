@@ -1,0 +1,31 @@
+unit ChooseType;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
+  System.Actions, Vcl.ActnList;
+
+type
+  TChoose = class(TForm)
+    ChooseList: TPanel;
+    Button1: TButton;
+    Button2: TButton;
+    ActionList1: TActionList;
+    chooseCandy: TAction;
+    chooseTypeCandy: TAction;
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Choose: TChoose;
+
+implementation
+
+{$R *.dfm}
+
+end.

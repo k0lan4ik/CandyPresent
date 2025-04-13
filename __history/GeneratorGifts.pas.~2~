@@ -1,0 +1,56 @@
+unit GeneratorGifts;
+
+interface
+
+implementation
+uses
+  CandyTypes;
+
+type
+  TGiftItemInf = record
+    PKeySweet: Integer;
+    Quantity: Integer;
+  end;
+
+  TGiftItemAdr = ^TGiftItem;
+
+  TGiftItem = record
+    Inf: TGiftItemInf;
+    Adr: TGiftItemInf;
+  end;
+
+   TGiftInf = record
+    Items: TGiftItemAdr;
+    TotalSugar: Real;
+    TotalCost: Integer;
+    TotalWeight: Real;
+  end;
+
+  TGiftAdr = ^TGift;
+
+  TGift = record
+    Inf: TGiftInf;
+    Adr: TGiftAdr;
+  end;
+
+
+procedure GenerateGifts(TargetWeight, WeightTolerance: Real;
+  TargetCost, CostTolerance: Integer;
+  NumTypes: Integer;
+
+  ResultGifts: TGiftAdr);
+var
+  CurrentGift: TGiftAdr;
+begin
+  // Пример выбора первых N типов
+  var SelectedTypes: array of TTypeOfCandysAdr;
+  SetLength(SelectedTypes, NumTypes);
+  for var i := 0 to NumTypes-1 do
+    SelectedTypes[i] := ;
+
+  New(CurrentGift);
+  ProcessCombination(SelectedTypes, 0);
+end;
+end.
+
+end.

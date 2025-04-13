@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899.12.30 00:00:00.000.543,=D:\Университет\Delphi\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.582,=D:\Университет\Delphi\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.669,=D:\Университет\Delphi\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.448,=D:\Университет\Delphi\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.728,=D:\Университет\1 курс\УПОзн\CandyPresent\FileWork.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.703,=D:\Университет\1 курс\УПОзн\CandyPresent\CandyTypes.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.495,D:\Университет\Delphi\Unit2.pas=D:\Университет\1 курс\УПОзн\CandyPresent\FormView.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.725,D:\Университет\Delphi\Project3.dproj=D:\Университет\1 курс\УПОзн\CandyPresent\UI.dproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.495,D:\Университет\Delphi\Unit2.dfm=D:\Университет\1 курс\УПОзн\CandyPresent\FormView.dfm</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.200,=D:\Университет\Delphi\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.063,=D:\Университет\Delphi\Unit2.pas</Transaction>
+    <Transaction>2025.04.08 23:31:59.859,=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
+    <Transaction>2025.04.08 23:38:14.829,D:\Университет\1 курс\УПОзн\CandyPresent\ChooseType.pas=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
+    <Transaction>2025.04.08 23:38:14.829,D:\Университет\1 курс\УПОзн\CandyPresent\ChooseType.dfm=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.dfm</Transaction>
+  </Transactions>
+</BorlandProject>

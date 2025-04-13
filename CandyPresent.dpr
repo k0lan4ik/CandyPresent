@@ -7,7 +7,9 @@ uses
   System.SysUtils,
   FileWork in 'FileWork.pas',
   CandyTypes in 'CandyTypes.pas',
-  Menu in 'Menu.pas';
+  Menu in 'Menu.pas',
+  GeneratorGifts in 'GeneratorGifts.pas',
+  GiftWork in 'GiftWork.pas';
 
 const
   MAIN_MENU: array [1 .. 10] of string = ('1. Чтение данных из файла',
@@ -20,6 +22,12 @@ const
     '10.Выход с сохранением изменений');
   LISTS_ARRAY: array [1 .. 2] of string = ('Cписок сладостей',
     'Список типов сладостей');
+  CANDY_LIST: array [1 .. 6] of string = ('pk', 'имя', 'тип', 'стоимость',
+    'вес', 'сахар');
+  TYPE_LIST: array [1 .. 2] of string = ('pk', 'имя');
+
+type
+  TVoidProcedure = procedure();
 
 var
   headType: TTypeOfCandysAdr;
@@ -27,78 +35,78 @@ var
   info: TTypeOfCandysAdrs;
   pkType, pkCandy, i: Integer;
 
-procedure ReadTypeList(var p: TTypeOfCandysAdr);
+procedure ReadTypeList();
 var
   i: Integer;
 begin
   ClearConsole;
-  Write('Введите число элементов: ');
-  Readln(i);
-  Writeln;
-  for i := 1 to i do
-  begin
-    Write('Введите ИМЯ типа ', i, ': ');
-    Readln(p^.Inf.Name);
-    p^.Inf.PKey := pkType;
-    Add(p, p^.Inf);
-    inc(pkType);
-    Writeln;
-  end;
+
+  Write('Введите ИМЯ типа : ');
+  Readln(headType^.Inf.Name);
+  headType^.Inf.PKey := pkType;
+  Add(headType, headType^.Inf);
+  inc(pkType);
+
 end;
 
-procedure ReadCandyList(var p: TCandysAdr);
+procedure ReadCandyList();
 var
   i: Integer;
-  temp: String;
+  temp: TTypeOfCandysAdr;
+  p: TCandysAdr;
 begin
   ClearConsole;
-  Write('Введите число элементов: ');
-  Readln(i);
-  Writeln;
-  for i := 1 to i do
-  begin
-    Write('Введите ИМЯ сладости ', i, ': ');
-    Readln(p^.Inf.Name);
-    Write('Введите ТИП сладости ', i, ': ');
-    Readln(headType^.Inf.Name);
-    p^.Inf.TypeCandyKet := Find(headType, headType^.Inf, CompareTCName)
-      [0]^.Inf.PKey;
-    Write('Введите СТОЙМОСТЬ сладости ', i, ': ');
-    Readln(p^.Inf.Cost);
-    Write('Введите ВЕС сладости ', i, ': ');
-    Readln(p^.Inf.Weigth);
-    p^.Inf.PKey := pkCandy;
-    Add(p, p^.Inf);
-    inc(pkCandy);
-    Writeln;
-  end;
-
+  p := headCandy;
+  Write('Введите ИМЯ сладости : ');
+  Readln(p^.Inf.Name);
+  repeat
+    Write('Введите ИНДЕКС типа сладости : ');
+    Readln(headType^.Inf.PKey);
+    temp := Find(headType^.Adr, headType^.Inf, CompareTCPKey)[0];
+    if temp = nil then
+      BaseInfo(['Такой тип не найден, повторите ввод']);
+  until temp <> nil;
+  p^.Inf.TypeCandyKet := temp^.Inf.PKey;
+  Write('Введите СТОЙМОСТЬ сладости : ');
+  Readln(p^.Inf.Cost);
+  Write('Введите ВЕС сладости : ');
+  Readln(p^.Inf.Weigth);
+  Write('Введите СОДЕРЖАНИЕ САХАРА в сладости : ');
+  Readln(p^.Inf.Sugar);
+  p^.Inf.PKey := pkCandy;
+  Add(p, p^.Inf);
+  inc(pkCandy);
 end;
 
-procedure WriteTypeList(p: TTypeOfCandysAdr);
+procedure WriteTypeList();
 var
   temp: TTypeOfCandysAdr;
 begin
-  Writeln('  pk                 имя');
-  while p^.Adr <> nil do
+  ClearConsole;
+  temp := headType;
+  Writeln('|', TYPE_LIST[1]:4, '|', TYPE_LIST[2]:20, '|');
+  while temp^.Adr <> nil do
   begin
-    p := p^.Adr;
-    Writeln(p^.Inf.PKey:4, p^.Inf.Name:20);
+    temp := temp^.Adr;
+    Writeln('|', temp^.Inf.PKey:4, '|', temp^.Inf.Name:20, '|');
   end;
 end;
 
-procedure WriteCandyList(p: TCandysAdr);
+procedure WriteCandyList();
 var
-  temp: TCandysAdr;
+  p: TCandysAdr;
 begin
-  Writeln(' pk                    имя                    тип       стоимость       вес');
+  ClearConsole;
+  p := headCandy;
+  Writeln('|', CANDY_LIST[1]:4, '|', CANDY_LIST[2]:20, '|', CANDY_LIST[3]:20,
+    '|', CANDY_LIST[4]:10, '|', CANDY_LIST[5]:10, '|', CANDY_LIST[6]:10);
   while p^.Adr <> nil do
   begin
     p := p^.Adr;
     headType^.Inf.PKey := p^.Inf.TypeCandyKet;
-    Writeln(p^.Inf.PKey:4, p^.Inf.Name:20,
-      Find(headType, headType^.Inf, CompareTCPKey)[0]^.Inf.Name:20,
-      p^.Inf.Cost:7, p^.Inf.Weigth:7:2);
+    Writeln('|', p^.Inf.PKey:4, '|', p^.Inf.Name:20, '|',
+      Find(headType^.Adr, headType^.Inf, CompareTCPKey)[0]^.Inf.Name:20, '|',
+      p^.Inf.Cost:10, '|', p^.Inf.Weigth:10:3, '|', p^.Inf.Sugar:10:3);
   end;
 end;
 
@@ -106,8 +114,8 @@ procedure ReadFromFile();
 var
   val1, val2: Integer;
 begin
-  val1 := LoadFromFile(headType, 'test.dcu');
-  val2 := LoadFromFile(headCandy, 'test.dcu');
+  val1 := LoadFromFile(headType, 'type.dcu');
+  val2 := LoadFromFile(headCandy, 'candy.dcu');
   if (val1 <> -1) and (val2 <> -1) then
   begin
     BaseInfo(['Чтение с файла прошло успешно']);
@@ -118,53 +126,269 @@ begin
     BaseInfo(['Ошибка чтение с файла']);
 end;
 
-procedure PrintList();
+procedure SortCandyList();
 begin
-  case BaseMenu(LISTS_ARRAY) of
+  case BaseMenu(CANDY_LIST) of
     0:
-      begin
-        WriteCandyList(headCandy);
-        Readln;
-      end;
+      Sort(headCandy^.Adr, CompareCnPKey);
     1:
-      begin
-        WriteTypeList(headType);
-        Readln;
-      end;
+      Sort(headCandy^.Adr, CompareCnTypeCandyKet);
+    2:
+      Sort(headCandy^.Adr, CompareCnName);
+    3:
+      Sort(headCandy^.Adr, CompareCnCost);
+    4:
+      Sort(headCandy^.Adr, CompareCnWeigth);
+    5:
+      Sort(headCandy^.Adr, CompareCnSugar);
   end;
 
 end;
 
-procedure AddToList();
+procedure SortTypeList();
 begin
-  case BaseMenu(LISTS_ARRAY) of
+  case BaseMenu(TYPE_LIST) of
     0:
-      ReadCandyList(headCandy);
+      Sort(headType, CompareTCPKey);
     1:
-      ReadTypeList(headType);
+      Sort(headType, CompareTCName);
   end;
-  BaseInfo(['Элемент(-ы) был(-и) добавлен(-ы)']);
+
+end;
+
+procedure FindCandyList();
+var
+  tempT: TTypeOfCandysAdrs;
+  tempC: TCandysAdrs;
+  i: Integer;
+begin
+  case BaseMenu(CANDY_LIST) of
+    0:
+      begin
+        ClearConsole;
+        Readln(headCandy^.Inf.PKey);
+        tempC := Find(headCandy^.Adr, headCandy^.Inf, CompareCnPKey);
+      end;
+    2:
+      begin
+        ClearConsole;
+        repeat
+          Readln(headType^.Inf.Name);
+          tempT := Find(headType^.Adr, headType^.Inf, CompareTCName);
+          if tempT[0] = nil then
+            BaseInfo(['Такой тип не найден, повторите ввод']);
+        until tempT[0] <> nil;
+        headCandy^.Inf.TypeCandyKet := tempT[0]^.Inf.PKey;
+        tempC := Find(headCandy^.Adr, headCandy^.Inf, CompareCnTypeCandyKet);
+      end;
+    1:
+      begin
+        ClearConsole;
+        Readln(headCandy^.Inf.Name);
+        tempC := Find(headCandy^.Adr, headCandy^.Inf, CompareCnName);
+      end;
+    3:
+      begin
+        ClearConsole;
+        Readln(headCandy^.Inf.Cost);
+        tempC := Find(headCandy^.Adr, headCandy^.Inf, CompareCnCost);
+      end;
+    4:
+      begin
+        ClearConsole;
+        Readln(headCandy^.Inf.Weigth);
+        tempC := Find(headCandy^.Adr, headCandy^.Inf, CompareCnWeigth);
+      end;
+    5:
+      begin
+        ClearConsole;
+        Readln(headCandy^.Inf.Sugar);
+        tempC := Find(headCandy^.Adr, headCandy^.Inf, CompareCnSugar);
+      end;
+  end;
+  ClearConsole;
+  i := 0;
+  Writeln('|', CANDY_LIST[1]:4, '|', CANDY_LIST[2]:20, '|', CANDY_LIST[3]:20,
+    '|', CANDY_LIST[4]:10, '|', CANDY_LIST[5]:10, '|');
+  While tempC[i] <> nil do
+  begin
+    headType^.Inf.PKey := tempC[i]^.Inf.TypeCandyKet;
+    Writeln('|', tempC[i]^.Inf.PKey:4, '|', tempC[i]^.Inf.Name:20, '|',
+      Find(headType^.Adr, headType^.Inf, CompareTCPKey)[0]^.Inf.Name:20, '|',
+      tempC[i]^.Inf.Cost:10, '|', tempC[i]^.Inf.Weigth:10:3, '|');
+    inc(i);
+  end;
+end;
+
+procedure FindTypeList();
+var
+  tempT: TTypeOfCandysAdrs;
+  i: Integer;
+begin
+  case BaseMenu(TYPE_LIST) of
+    0:
+      begin
+        ClearConsole;
+        Readln(headType^.Inf.PKey);
+        tempT := Find(headType^.Adr, headType^.Inf, CompareTCPKey);
+      end;
+    1:
+      begin
+        ClearConsole;
+        Readln(headType^.Inf.Name);
+        tempT := Find(headType^.Adr, headType^.Inf, CompareTCName);
+      end;
+  end;
+  ClearConsole;
+  i := 0;
+  Writeln('|', TYPE_LIST[1]:4, '|', TYPE_LIST[2]:20, '|');
+  While tempT[i] <> nil do
+  begin
+    Writeln('|', tempT[i]^.Inf.PKey:4, '|', tempT[i]^.Inf.Name:20, '|');
+    inc(i);
+  end;
+end;
+
+procedure EditCandyList();
+var
+  tempT: TTypeOfCandysAdrs;
+begin
+  FindCandyList();
+  Writeln('Введите номер изменяемого элемента');
+  Readln(headCandy^.Inf.PKey);
+  case BaseMenu(CANDY_LIST) of
+    1:
+      begin
+        ClearConsole;
+        Readln(Find(headCandy^.Adr, headCandy^.Inf, CompareCnPKey)
+          [0]^.Inf.Name);
+      end;
+    2:
+      begin
+        ClearConsole;
+        repeat
+          Readln(headType^.Inf.Name);
+          tempT := Find(headType^.Adr, headType^.Inf, CompareTCName);
+          if tempT[0] = nil then
+            BaseInfo(['Такой тип не найден, повторите ввод']);
+        until tempT[0] <> nil;
+        Find(headCandy^.Adr, headCandy^.Inf, CompareCnPKey)[0]^.Inf.TypeCandyKet
+          := tempT[0]^.Inf.PKey;
+      end;
+    3:
+      begin
+        ClearConsole;
+        Readln(Find(headCandy^.Adr, headCandy^.Inf, CompareCnPKey)
+          [0]^.Inf.Cost);
+      end;
+    4:
+      begin
+        ClearConsole;
+        Readln(Find(headCandy^.Adr, headCandy^.Inf, CompareCnPKey)
+          [0]^.Inf.Weigth);
+      end;
+    5:
+      begin
+        ClearConsole;
+        Readln(Find(headCandy^.Adr, headCandy^.Inf, CompareCnPKey)
+          [0]^.Inf.Sugar);
+      end;
+  end;
+end;
+
+procedure EditTypeList();
+begin
+  FindTypeList();
+  Writeln('Введите номер изменяемого элемента');
+  Readln(headType^.Inf.PKey);
+  case BaseMenu(TYPE_LIST) of
+    1:
+      begin
+        ClearConsole;
+        Readln(Find(headType^.Adr, headType^.Inf, CompareTCPKey)[0]^.Inf.Name);
+      end;
+  end;
+end;
+
+procedure ChoseFunction(ParamsN: array of string;
+  ParamsP: array of TVoidProcedure);
+var
+  i: Integer;
+begin
+  i := BaseMenu(ParamsN);
+  if i <> -1 then
+    ParamsP[i]();
+end;
+
+procedure DeleteCandyList();
+var
+  pk: Integer;
+begin
+  FindCandyList();
+  Writeln('Введите номер удоляемого элемента');
+  Readln(pk);
+  Delete(headCandy, pk);
+
+end;
+
+procedure DeleteTypeList();
+var
+  pk: Integer;
+begin
+  FindTypeList();
+  Writeln('Введите номер удоляемого элемента');
+  Readln(pk);
+  Delete(headType, pk);
 end;
 
 procedure MainMenu();
+var Population: TPopulation;
+    isExit: Boolean;
 begin
-  while true do
+  isExit := false;
+  while not isExit do
   begin
     case BaseMenu(MAIN_MENU) of
       0:
         ReadFromFile();
       1:
-        PrintList();
+        begin
+          ChoseFunction(LISTS_ARRAY, [WriteCandyList, WriteTypeList]);
+          Readln;
+        end;
+      2:
+        ChoseFunction(LISTS_ARRAY, [SortCandyList, SortTypeList]);
+      3:
+        ChoseFunction(LISTS_ARRAY, [FindCandyList, FindTypeList]);
       4:
-        AddToList();
+        begin
+          ChoseFunction(LISTS_ARRAY, [ReadCandyList, ReadTypeList]);
+          BaseInfo(['Элемент был добавлен']);
+        end;
+      5:
+        ChoseFunction(LISTS_ARRAY, [DeleteCandyList, DeleteTypeList]);
+      6:
+        begin
+          ChoseFunction(LISTS_ARRAY, [EditCandyList, EditTypeList]);
+          Readln;
+        end;
+      7:
+        begin
+          RunGeneticAlgorithm(Population, headCandy^.Adr, headType^.Adr, 1000, // Макс. вес
+            500, // Макс. стоимость
+            3, // Макс. типов
+            50 // Поколений
+            );
+            Readln;
+        end;
       9:
         begin
-          SaveToFile(headType, 'test.dcu');
-          SaveToFile(headCandy, 'test.dcu');
-          Break;
+          SaveToFile(headType, 'type.dcu');
+          SaveToFile(headCandy, 'candy.dcu');
+          isExit := true;
         end;
-      -1, 8:
-        Break;
+      -1,8:
+       isExit := true;
     end;
 
   end;
@@ -178,29 +402,6 @@ begin
   headCandy^.Adr := nil;
 
   MainMenu();
-  // ReadList(head);
-  Sort(headType^.Adr, CompareTCName);
-  WriteTypeList(headType);
-  Readln(headType^.Inf.Name);
-  info := Find(headType^.Adr, headType^.Inf, CompareTCName);
-  i := 0;
-  while (i <= High(info)) and (info[i] <> nil) do
-  begin
-    Writeln(info[i]^.Inf.PKey, ' ---- ', info[i]^.Inf.Name);
-    inc(i);
-  end;
-
-  Readln(i);
-  Delete(headType, i);
-  WriteTypeList(headType);
-
-  Readln(headType^.Inf.Name);
-  headType^.Inf.PKey := pkType;
-  Add(headType, headType^.Inf);
-
-  Readln;
-  SaveToFile(headType, 'test.dcu');
-  SaveToFile(headCandy, 'test.dcu');
 
   Clear(headType);
   Clear(headCandy);

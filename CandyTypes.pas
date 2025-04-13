@@ -1,6 +1,7 @@
 unit CandyTypes;
 
 interface
+
 type
   TCandysInf = record
     PKey: Integer;
@@ -8,6 +9,7 @@ type
     Name: String[200];
     Cost: Integer;
     Weigth: Real;
+    Sugar: Real;
   end;
 
   TCandysAdr = ^TCandys;
@@ -39,17 +41,19 @@ procedure Sort(var Head: TCandysAdr; Compare: TCandyCompare); overload;
 procedure Sort(var Head: TTypeOfCandysAdr; Compare: TCandyTypeCompare);
   overload;
 
-function Find(Head: TCandysAdr; const Param :TCandysInf; Compare: TCandyCompare ): TCandysAdrs;overload;
-function Find(Head: TTypeOfCandysAdr; const Param :TTypeOfCandysInf; Compare: TCandyTypeCompare ): TTypeOfCandysAdrs;overload;
+function Find(Head: TCandysAdr; const Param: TCandysInf; Compare: TCandyCompare)
+  : TCandysAdrs; overload;
+function Find(Head: TTypeOfCandysAdr; const Param: TTypeOfCandysInf;
+  Compare: TCandyTypeCompare): TTypeOfCandysAdrs; overload;
 
-procedure Add(Head: TCandysAdr; Element: TCandysInf);overload;
-procedure Add(Head: TTypeOfCandysAdr; Element: TTypeOfCandysInf);overload;
+procedure Add(var Head: TCandysAdr; Element: TCandysInf); overload;
+procedure Add(Head: TTypeOfCandysAdr; Element: TTypeOfCandysInf); overload;
 
-procedure Delete(Head: TCandysAdr; PK: Integer);overload;
-procedure Delete(Head: TTypeOfCandysAdr; PK: Integer);overload;
+procedure Delete(Head: TCandysAdr; PK: Integer); overload;
+procedure Delete(Head: TTypeOfCandysAdr; PK: Integer); overload;
 
-procedure Clear(var Head: TCandysAdr);overload;
-procedure Clear(var Head: TTypeOfCandysAdr);overload;
+procedure Clear(var Head: TCandysAdr); overload;
+procedure Clear(var Head: TTypeOfCandysAdr); overload;
 
 // компораторы для TCandys
 function CompareCnPKey(const compare1, compare2: TCandysInf): Integer;
@@ -57,6 +61,7 @@ function CompareCnTypeCandyKet(const compare1, compare2: TCandysInf): Integer;
 function CompareCnName(const compare1, compare2: TCandysInf): Integer;
 function CompareCnCost(const compare1, compare2: TCandysInf): Integer;
 function CompareCnWeigth(const compare1, compare2: TCandysInf): Integer;
+function CompareCnSugar(const compare1, compare2: TCandysInf): Integer;
 
 // компораторы для TTypeOfCandys
 function CompareTCPKey(const compare1, compare2: TTypeOfCandysInf): Integer;
@@ -117,13 +122,24 @@ begin
     Result := 0
 end;
 
-//поиск
-function Find(Head: TCandysAdr; const Param :TCandysInf; Compare: TCandyCompare ): TCandysAdrs;overload;
+function CompareCnSugar(const compare1, compare2: TCandysInf): Integer;
+begin
+  if compare1.Name > compare2.Name then
+    Result := 1
+  else if compare1.Name < compare2.Name then
+    Result := -1
+  else
+    Result := 0
+end;
+
+// поиск
+function Find(Head: TCandysAdr; const Param: TCandysInf; Compare: TCandyCompare)
+  : TCandysAdrs; overload;
 var
   Current: TCandysAdr;
   i: Integer;
 begin
- Current := Head;
+  Current := Head;
   SetLength(Result, 4);
   i := 0;
   while Current <> nil do
@@ -140,22 +156,30 @@ begin
   Result[i] := nil;
 end;
 
-//добавление в конец
-procedure Add(Head: TCandysAdr; Element: TCandysInf);overload;
+// добавление в конец
+procedure Add(var Head: TCandysAdr; Element: TCandysInf); overload;
 var
   Temp: TCandysAdr;
 begin
   Temp := Head;
-  While Temp^.Adr <> nil  do
+  if Temp = nil then
+  begin
+    New(Head);
+    Temp := Head;
+  end
+  else
+  begin
+    While Temp^.Adr <> nil do
+      Temp := Temp^.Adr;
+    New(Temp^.Adr);
     Temp := Temp^.Adr;
-  New(Temp^.Adr);
-  Temp := Temp^.Adr;
+  end;
   Temp^.Inf := Element;
   Temp^.Adr := nil;
 end;
 
-//удаление
-procedure Delete(Head: TCandysAdr; PK: Integer);overload;
+// удаление
+procedure Delete(Head: TCandysAdr; PK: Integer); overload;
 var
   Deleted, Prev: TCandysAdr;
 begin
@@ -170,7 +194,6 @@ begin
   end;
 end;
 
-
 // методы сортировки
 function Split(List: TCandysAdr): TCandysAdr; overload;
 var
@@ -180,7 +203,7 @@ begin
   if (List <> nil) and (List^.Adr <> nil) then
   begin
     Slow := List;
-    Fast := List^.Adr;
+    Fast := List;
     Prev := nil;
 
     while (Fast <> nil) and (Fast^.Adr <> nil) do
@@ -261,8 +284,8 @@ begin
   end;
 end;
 
-//очистка памяти
-procedure Clear(var Head: TCandysAdr);overload;
+// очистка памяти
+procedure Clear(var Head: TCandysAdr); overload;
 var
   Temp: TCandysAdr;
 begin
@@ -298,8 +321,9 @@ begin
     Result := 0
 end;
 
-//поиск
-function Find(Head: TTypeOfCandysAdr; const Param :TTypeOfCandysInf; Compare: TCandyTypeCompare ): TTypeOfCandysAdrs;overload;
+// поиск
+function Find(Head: TTypeOfCandysAdr; const Param: TTypeOfCandysInf;
+  Compare: TCandyTypeCompare): TTypeOfCandysAdrs; overload;
 var
   Current: TTypeOfCandysAdr;
   i: Integer;
@@ -321,13 +345,13 @@ begin
   Result[i] := nil;
 end;
 
-//добавление в конец
-procedure Add(Head: TTypeOfCandysAdr; Element: TTypeOfCandysInf);overload;
+// добавление в конец
+procedure Add(Head: TTypeOfCandysAdr; Element: TTypeOfCandysInf); overload;
 var
   Temp: TTypeOfCandysAdr;
 begin
   Temp := Head;
-  While Temp^.Adr <> nil  do
+  While Temp^.Adr <> nil do
     Temp := Temp^.Adr;
   New(Temp^.Adr);
   Temp := Temp^.Adr;
@@ -335,8 +359,8 @@ begin
   Temp^.Adr := nil;
 end;
 
-//удаление
-procedure Delete(Head: TTypeOfCandysAdr; PK: Integer);overload;
+// удаление
+procedure Delete(Head: TTypeOfCandysAdr; PK: Integer); overload;
 var
   Deleted, Prev: TTypeOfCandysAdr;
 begin
@@ -442,8 +466,8 @@ begin
   end;
 end;
 
-//очистка памяти
-procedure Clear(var Head: TTypeOfCandysAdr);overload;
+// очистка памяти
+procedure Clear(var Head: TTypeOfCandysAdr); overload;
 var
   Temp: TTypeOfCandysAdr;
 begin

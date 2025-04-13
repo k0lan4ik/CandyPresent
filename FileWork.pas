@@ -66,6 +66,7 @@ begin
       New(temp^.Adr);
       temp := temp^.Adr;
       temp.Inf := Inf;
+      temp.Adr := nil;
       if Inf.PKey > Result then
         Result := Inf.PKey;
     end;
@@ -95,6 +96,7 @@ begin
       New(temp^.Adr);
       temp := temp^.Adr;
       temp.Inf := Inf;
+      temp.Adr := nil;
       if Inf.PKey > Result then
         Result := Inf.PKey;
     end;

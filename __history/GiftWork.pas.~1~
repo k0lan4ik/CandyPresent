@@ -1,0 +1,230 @@
+unit GiftWork;
+
+interface
+uses   CandyTypes, SysUtils, Classes;
+
+type
+  PGift = ^TGift;
+  TGift = record
+    Items: TCandysAdr; // Список сладостей в подарке
+    TotalSugar: Double;
+    TotalCost: Integer;
+    TotalWeight: Double;
+    TypesCount: Integer;
+    Next: PGift;
+  end;
+
+  TPopulation = array of PGift;
+
+// Генетический алгоритм
+procedure RunGeneticAlgorithm(
+  var Population: TPopulation;
+  Candies: TCandysAdr;
+  Types: TTypeOfCandysAdr;
+  MaxWeight, MaxCost: Double;
+  MaxTypes: Integer;
+  Generations: Integer
+);
+function CalculateFitness(Gift: PGift): Double;
+procedure MutateGift(Gift: PGift; Candies: TCandysAdr; Types: TTypeOfCandysAdr);
+procedure CrossoverGifts(Parent1, Parent2: PGift; var Child: PGift);
+
+implementation
+
+// Обновление статистики подарка
+procedure UpdateGiftStats(Gift: PGift);
+var
+  Current: TCandysAdr;
+  Types: TStringList;
+begin
+  Gift^.TotalSugar := 0;
+  Gift^.TotalCost := 0;
+  Gift^.TotalWeight := 0;
+  Gift^.TypesCount := 0;
+
+  Types := TStringList.Create;
+  try
+    Types.Duplicates := dupIgnore;
+
+    Current := Gift^.Items;
+    while Current <> nil do
+    begin
+      Gift^.TotalSugar := Gift^.TotalSugar + Current^.Inf.Sugar;
+      Gift^.TotalCost := Gift^.TotalCost + Current^.Inf.Cost;
+      Gift^.TotalWeight := Gift^.TotalWeight + Current^.Inf.Weigth;
+      Types.Add(IntToStr(Current^.Inf.TypeCandyKet));
+      Current := Current^.Adr;
+    end;
+
+    Gift^.TypesCount := Types.Count;
+  finally
+    Types.Free;
+  end;
+end;
+
+// Создание случайного подарка
+function CreateRandomGift(
+  Candies: TCandysAdr;
+  Types: TTypeOfCandysAdr;
+  MaxTypes: Integer
+): PGift;
+var
+  TypeCount, i: Integer;
+  CurrentType: TTypeOfCandysAdr;
+  CurrentCandy: TCandysAdr;
+begin
+  New(Result);
+  Result^.Items := nil;
+  Result^.Next := nil;
+
+  // Выбираем случайные типы
+  TypeCount := 0;
+  CurrentType := Types;
+  while (CurrentType <> nil) and (TypeCount < MaxTypes) do
+  begin
+    if Random(2) = 1 then
+    begin
+      // Выбираем случайную сладость из этого типа
+      CurrentCandy := Candies;
+      while CurrentCandy <> nil do
+      begin
+        if CurrentCandy^.Inf.TypeCandyKet = CurrentType^.Inf.PKey then
+        begin
+          Add(Result^.Items, CurrentCandy^.Inf);
+          Inc(TypeCount);
+          Break;
+        end;
+        CurrentCandy := CurrentCandy^.Adr;
+      end;
+    end;
+    CurrentType := CurrentType^.Adr;
+  end;
+  UpdateGiftStats(Result);
+end;
+
+
+
+// Функция приспособленности
+function CalculateFitness(Gift: PGift): Double;
+begin
+  Result := Gift^.TotalSugar; // Минимизируем сахар
+end;
+
+// Турнирный отбор
+function TournamentSelection(Population: TPopulation): PGift;
+var
+  Best: PGift;
+  i: Integer;
+begin
+  Best := Population[Random(Length(Population))];
+  for i := 1 to 4 do
+  begin
+    if CalculateFitness(Population[Random(Length(Population))]) < CalculateFitness(Best) then
+      Best := Population[Random(Length(Population))];
+  end;
+  Result := Best;
+end;
+
+// Скрещивание
+procedure CrossoverGifts(Parent1, Parent2: PGift; var Child: PGift);
+var
+  Current: TCandysAdr;
+begin
+  New(Child);
+  Child^.Items := nil;
+
+  // Берем 50% от первого родителя
+  Current := Parent1^.Items;
+  while Current <> nil do
+  begin
+    if Random(2) = 1 then
+      Add(Child^.Items, Current^.Inf);
+    Current := Current^.Adr;
+  end;
+
+  // Берем 50% от второго родителя
+  Current := Parent2^.Items;
+  while Current <> nil do
+  begin
+    if Random(2) = 1 then
+      Add(Child^.Items, Current^.Inf);
+    Current := Current^.Adr;
+  end;
+
+  UpdateGiftStats(Child);
+end;
+
+// Мутация
+procedure MutateGift(Gift: PGift; Candies: TCandysAdr; Types: TTypeOfCandysAdr);
+begin
+  // С вероятностью 10% добавляем новую сладость
+  if Random < 0.1 then
+  begin
+    // Выбираем случайный тип
+    var TypeNode := Types;
+    while (TypeNode <> nil) and (Random(2) = 1) do
+      TypeNode := TypeNode^.Adr;
+
+    // Выбираем случайную сладость этого типа
+    if TypeNode <> nil then
+    begin
+      var CandyNode := Candies;
+      while CandyNode <> nil do
+      begin
+        if CandyNode^.Inf.TypeCandyKet = TypeNode^.Inf.PKey then
+        begin
+          Add(Gift^.Items, CandyNode^.Inf);
+          Break;
+        end;
+        CandyNode := CandyNode^.Adr;
+      end;
+    end;
+  end;
+  UpdateGiftStats(Gift);
+end;
+
+// Основная процедура алгоритма
+procedure RunGeneticAlgorithm(
+  var Population: TPopulation;
+  Candies: TCandysAdr;
+  Types: TTypeOfCandysAdr;
+  MaxWeight, MaxCost: Double;
+  MaxTypes: Integer;
+  Generations: Integer
+);
+var
+  i, j: Integer;
+  NewPopulation: TPopulation;
+  Parent1, Parent2, Child: PGift;
+begin
+  // Инициализация популяции
+  SetLength(Population, 100);
+  for i := 0 to High(Population) do
+    Population[i] := CreateRandomGift(Candies, Types, MaxTypes);
+
+  for j := 1 to Generations do
+  begin
+    SetLength(NewPopulation, Length(Population));
+
+    // Элитизм: сохраняем лучшего
+    var BestIndex := 0;
+    for i := 1 to High(Population) do
+      if CalculateFitness(Population[i]) < CalculateFitness(Population[BestIndex]) then
+        BestIndex := i;
+    NewPopulation[0] := Population[BestIndex];
+
+    // Заполняем новую популяцию
+    for i := 1 to High(NewPopulation) do
+    begin
+      Parent1 := TournamentSelection(Population);
+      Parent2 := TournamentSelection(Population);
+      CrossoverGifts(Parent1, Parent2, Child);
+      MutateGift(Child, Candies, Types);
+      NewPopulation[i] := Child;
+    end;
+
+    // Заменяем старую популяцию
+    Population := NewPopulation;
+  end;
+end;
+end.

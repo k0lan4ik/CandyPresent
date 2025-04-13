@@ -1,0 +1,16 @@
+program UI;
+
+uses
+  Vcl.Forms,
+  FormView in 'FormView.pas' {Form2},
+  CandyTypes in 'CandyTypes.pas',
+  FileWork in 'FileWork.pas';
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TForm2, Form2);
+  Application.Run;
+end.
