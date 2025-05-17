@@ -1,0 +1,69 @@
+unit GiftWorkV2;
+
+interface
+
+uses
+  CandyTypes, SysUtils;
+
+type
+  PGiftItem = ^TGiftItem;
+  TGiftItem = record
+    Candy: TCandysAdr;
+    Quantity: Integer;
+    Next: PGiftItem
+  end;
+
+
+  TGiftSolution = record
+    TotalWeight: Real;
+    TotalCost: Integer;
+    TotalSugar: Real;
+    UsedTypes: array of Integer;
+    Items: PGiftItem;
+  end;
+
+  TGiftSolutions = array of TGiftSolution;
+
+function GenerateGift(MaxWeight: Real; MaxTypes, MaxCost: Integer;  headCandy:TCandysAdr): TGiftSolutions;
+
+
+implementation
+
+
+
+function GenerateGift(MaxWeight: Real; MaxTypes, MaxCost: Integer;  headCandy:TCandysAdr): TGiftSolutions;
+
+function CalcValue(Temp:TCandysInf): Integer;
+begin
+  Result := 1;
+end;
+
+var
+  dp: array of array of array of Integer;
+  temp: TCandysAdr;
+  t, w, c, i: Integer;
+begin
+   SetLength(dp, MaxTypes + 1, Round(MaxWeight * 100) + 1, MaxCost + 1);
+  for t := 0 to MaxTypes do
+    for w := 0 to Round(MaxWeight * 100) do
+      for c := 0 to MaxCost do
+        dp[t][w][c] := 0;
+
+    while temp <> nil do
+begin
+
+
+    for t := MaxTypes downto 1 do
+      for w := Round(MaxWeight * 100) downto Round(temp.Inf.Weigth * 100)  do
+        for c := MaxCost downto temp.Inf.Cost do
+        begin
+          temp := headCandy;
+            if dp[t][w][c] < dp[t - 1][w - Round(temp.Inf.Weigth * 100)][c - temp.Inf.Cost] + CalcValue(temp.Inf) then
+               dp[t][w][c] := dp[t - 1][w - Round(temp.Inf.Weigth * 100)][c - temp.Inf.Cost] + CalcValue(temp.Inf);
+        end;
+      temp := temp.Adr;
+end;
+end;
+
+
+end.

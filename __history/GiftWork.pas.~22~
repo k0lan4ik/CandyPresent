@@ -1,0 +1,230 @@
+unit GiftWork;
+
+interface
+
+uses
+  CandyTypes, SysUtils, Math, Generics.Collections, Generics.Defaults, StrUtils;
+
+type
+  TGiftItem = record
+    CandyInfo: TCandysInf;
+    Quantity: Integer;
+  end;
+
+  TGiftSolution = record
+    TotalWeight: Real;
+    TotalCost: Integer;
+    TotalSugar: Real;
+    UsedTypes: TArray<Integer>;
+    Items: TList<TGiftItem>;
+  end;
+
+  TGiftOptimizer = class
+  private
+    FCandiesList: TCandysAdr;
+    FMaxSolutions: Integer;
+    FSolutions: TList<TGiftSolution>;
+    function GetStateKey(const Solution: TGiftSolution): string;
+    procedure UpdateSolutions(const NewState: TGiftSolution);
+  public
+    constructor Create(CandiesList: TCandysAdr; MaxSolutions: Integer = 10);
+    destructor Destroy; override;
+    function Optimize(MaxWeight: Real; MaxCost: Integer; MaxTypes: Integer)
+      : TArray<TGiftSolution>;
+  end;
+
+implementation
+
+{ TGiftOptimizer }
+
+constructor TGiftOptimizer.Create(CandiesList: TCandysAdr;
+  MaxSolutions: Integer = 10);
+begin
+  FCandiesList := CandiesList;
+  FMaxSolutions := MaxSolutions;
+  FSolutions := TList<TGiftSolution>.Create;
+end;
+
+destructor TGiftOptimizer.Destroy;
+begin
+  FSolutions.Free;
+  inherited;
+end;
+
+function TGiftOptimizer.GetStateKey(const Solution: TGiftSolution): string;
+var
+  SortedTypes: TArray<Integer>;
+  i: Integer;
+begin
+  SortedTypes := Copy(Solution.UsedTypes);
+  TArray.Sort<Integer>(SortedTypes);
+  if Length(SortedTypes) > 0 then
+    Result := IntToStr(SortedTypes[Low(SortedTypes)]);
+  for i := Low(SortedTypes) + 1 to High(SortedTypes) do
+    Result := Result + ',' + IntToStr(SortedTypes[i]);
+
+  Result := Format('W%.2fC%dS%.2fT%s', [Solution.TotalWeight,
+    Solution.TotalCost, Solution.TotalSugar, Result]);
+end;
+
+procedure TGiftOptimizer.UpdateSolutions(const NewState: TGiftSolution);
+begin
+  FSolutions.Add(NewState);
+end;
+
+function TGiftOptimizer.Optimize(MaxWeight: Real; MaxCost, MaxTypes: Integer)
+  : TArray<TGiftSolution>;
+var
+  Queue: TQueue<TGiftSolution>;
+  Current, NewState: TGiftSolution;
+  Candy: TCandysAdr;
+  MaxPerCandy: Integer;
+  Visited: TDictionary<string, Boolean>;
+  StateKey: string;
+  ValidSolutions: TList<TGiftSolution>;
+  i, j: Integer;
+  NewGiftItem: TGiftItem;
+begin
+  Queue := TQueue<TGiftSolution>.Create;
+  Visited := TDictionary<string, Boolean>.Create;
+  try
+    // Initialize empty solution
+    Current.Items := TList<TGiftItem>.Create;
+    Current.UsedTypes := [];
+    Queue.Enqueue(Current);
+
+    while Queue.Count > 0 do
+    begin
+      Current := Queue.Dequeue;
+
+      // Calculate current parameters
+      Current.TotalWeight := 0;
+      Current.TotalCost := 0;
+      Current.TotalSugar := 0;
+      for i := 0 to Current.Items.Count - 1 do
+      begin
+        Current.TotalWeight := Current.TotalWeight + Current.Items[i]
+          .CandyInfo.Weigth * Current.Items[i].Quantity;
+        Current.TotalCost := Current.TotalCost + Current.Items[i].CandyInfo.Cost
+          * Current.Items[i].Quantity;
+        Current.TotalSugar := Current.TotalSugar + Current.Items[i]
+          .CandyInfo.Sugar * Current.Items[i].Quantity;
+      end;
+
+      StateKey := GetStateKey(Current);
+      if Visited.ContainsKey(StateKey) then
+        Continue;
+      Visited.Add(StateKey, True);
+
+      Candy := FCandiesList;
+      while Candy <> nil do
+      begin
+        // Check type constraint
+        var
+        CurrentTypeCount := Length(Current.UsedTypes);
+        var
+        IsNewType := not TArray.Contains<Integer>(Current.UsedTypes,
+          Candy^.Inf.TypeCandyKet);
+        if (CurrentTypeCount >= MaxTypes) and IsNewType then
+        begin
+          Candy := Candy^.Adr;
+          Continue;
+        end;
+
+        // Calculate max possible quantity
+        MaxPerCandy :=
+          Trunc(Min((MaxWeight - Current.TotalWeight) / Candy^.Inf.Weigth,
+          (MaxCost - Current.TotalCost) / Candy^.Inf.Cost));
+        if MaxPerCandy < 0 then
+          MaxPerCandy := 0;
+
+        if MaxPerCandy > 0 then
+        begin
+          // Create new state
+          NewState.Items := TList<TGiftItem>.Create;
+          NewState.Items.AddRange(Current.Items);
+
+          // Add new candy
+          NewGiftItem.CandyInfo := Candy^.Inf;
+          NewGiftItem.Quantity := MaxPerCandy;
+          NewState.Items.Add(NewGiftItem);
+
+          // Update used types
+          if IsNewType then
+          begin
+            // ѕравильна€ инициализаци€ массива
+            SetLength(NewState.UsedTypes, CurrentTypeCount + 1);
+
+            //  опирование существующих типов (если есть)
+            if CurrentTypeCount > 0 then
+              NewState.UsedTypes := Copy(Current.UsedTypes, 0,
+                CurrentTypeCount);
+
+            // ƒобавление нового типа в конец массива
+            NewState.UsedTypes[CurrentTypeCount] := Candy^.Inf.TypeCandyKet;
+          end
+          else
+          begin
+            // ѕросто копируем существующие типы
+            NewState.UsedTypes := Copy(Current.UsedTypes, 0, CurrentTypeCount);
+          end;
+          // Enqueue new state if not visited
+          var
+          NewStateKey := GetStateKey(NewState);
+          if not Visited.ContainsKey(NewStateKey) then
+            Queue.Enqueue(NewState)
+          else
+            NewState.Items.Free;
+        end;
+
+        Candy := Candy^.Adr;
+      end;
+
+      // Save current state to solutions
+      UpdateSolutions(Current);
+    end;
+
+    // Filter valid solutions
+    ValidSolutions := TList<TGiftSolution>.Create;
+    try
+      for i := 0 to FSolutions.Count - 1 do
+      begin
+        Current := FSolutions[i];
+        if (Current.TotalWeight <= MaxWeight) and (Current.TotalCost <= MaxCost)
+          and (Length(Current.UsedTypes) <= MaxTypes) then
+        begin
+          ValidSolutions.Add(Current);
+        end
+        else
+        begin
+          // Free invalid solutions
+          Current.Items.Free;
+        end;
+      end;
+
+      // Sort by ascending sugar content
+      ValidSolutions.Sort(TComparer<TGiftSolution>.Construct(
+        function(const Left, Right: TGiftSolution): Integer
+        begin
+          Result := CompareValue(Left.TotalSugar, Right.TotalSugar);
+        end));
+
+      // Trim to max solutions
+      while ValidSolutions.Count > FMaxSolutions do
+      begin
+        ValidSolutions.Last.Items.Free;
+        ValidSolutions.Delete(ValidSolutions.Count - 1);
+      end;
+
+      Result := ValidSolutions.ToArray;
+    finally
+      ValidSolutions.Free;
+    end;
+
+  finally
+    Queue.Free;
+    Visited.Free;
+  end;
+end;
+
+end.

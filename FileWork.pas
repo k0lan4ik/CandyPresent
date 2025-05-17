@@ -5,12 +5,12 @@ interface
 uses
   CandyTypes;
 
-procedure SaveToFile(TypeOfCandys: TTypeOfCandysAdr; Road: String); overload;
-procedure SaveToFile(Candys: TCandysAdr; Road: String); overload;
+function SaveToFile(TypeOfCandys: TTypeOfCandysAdr; Road: String)
+  : Integer; overload;
+function SaveToFile(Candys: TCandysAdr; Road: String):Integer; overload;
 function LoadFromFile(var TypeOfCandy: TTypeOfCandysAdr; Road: String)
   : Integer; overload;
-  function LoadFromFile(var Candy: TCandysAdr; Road: String)
-  : Integer; overload;
+function LoadFromFile(var Candy: TCandysAdr; Road: String): Integer; overload;
 
 implementation
 
@@ -19,30 +19,44 @@ type
   TFileTypeOfCandy = File of TTypeOfCandysInf;
   TFileCandy = File of TCandysInf;
 
-procedure SaveToFile(TypeOfCandys: TTypeOfCandysAdr; Road: String); overload;
+function SaveToFile(TypeOfCandys: TTypeOfCandysAdr; Road: String)
+  : Integer; overload;
 var
   Save: TFileTypeOfCandy;
 begin
-  AssignFile(Save, Road);
-  Rewrite(Save);
-  While TypeOfCandys^.Adr <> nil do
-  begin
-    TypeOfCandys := TypeOfCandys^.Adr;
-    Write(Save, TypeOfCandys^.Inf);
+  Result := 0;
+  try
+    AssignFile(Save, Road);
+    Rewrite(Save);
+    While TypeOfCandys^.Adr <> nil do
+    begin
+      TypeOfCandys := TypeOfCandys^.Adr;
+      Write(Save, TypeOfCandys^.Inf);
+    end;
+
+  except
+    Result := -1;
+    Close(Save);
   end;
   Close(Save);
 end;
 
-procedure SaveToFile(Candys: TCandysAdr; Road: String); overload;
+function SaveToFile(Candys: TCandysAdr; Road: String):Integer; overload;
 var
   Save: TFileCandy;
 begin
-  AssignFile(Save, Road);
-  Rewrite(Save);
-  While Candys^.Adr <> nil do
-  begin
-    Candys := Candys^.Adr;
-    Write(Save, Candys^.Inf);
+  Result := 0;
+  try
+    AssignFile(Save, Road);
+    Rewrite(Save);
+    While Candys^.Adr <> nil do
+    begin
+      Candys := Candys^.Adr;
+      Write(Save, Candys^.Inf);
+    end;
+  except
+    Result := -1;
+    Close(Save);
   end;
   Close(Save);
 end;
@@ -70,12 +84,13 @@ begin
       if Inf.PKey > Result then
         Result := Inf.PKey;
     end;
-    Close(Save);
+
     Inc(Result);
   except
+    Close(Save);
     Result := -1;
   end;
-
+  Close(Save);
 end;
 
 function LoadFromFile(var Candy: TCandysAdr; Road: String): Integer; overload;
@@ -100,11 +115,12 @@ begin
       if Inf.PKey > Result then
         Result := Inf.PKey;
     end;
-    Close(Save);
     Inc(Result);
   except
+    Close(Save);
     Result := -1;
   end;
+  Close(Save);
 end;
 
 end.

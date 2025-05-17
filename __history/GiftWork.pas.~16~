@@ -1,0 +1,198 @@
+unit GiftWork;
+
+interface
+
+uses
+  CandyTypes, SysUtils, Math, Generics.Collections, Generics.Defaults;
+
+
+type
+  TGiftItem = record
+    CandyInfo: TCandysInf; // Информация о сладости
+    Quantity: Integer;     // Количество в подарке
+  end;
+
+  TGiftSolution = record
+    TotalWeight: Real;
+    TotalCost: Real;
+    TotalSugar: Real;
+    UsedTypes: TArray<Integer>;
+    Items: TList<TGiftItem>;
+    function IsBetterThan(const Other: TGiftSolution;
+      MaxWeight, MaxCost: Real): Boolean;
+  end;
+
+  TGiftOptimizer = class
+  private
+    CandiesList: TCandysAdr;
+    FMaxSolutions: Integer;
+    FSolutions: TList<TGiftSolution>;
+    procedure UpdateSolutions(const NewState: TGiftSolution; MaxWeight: Real;
+      MaxCost: Integer);
+  public
+    constructor Create(CandiesList: TCandysAdr; MaxSolutions: Integer = 10);
+    destructor Destroy; override;
+    function Optimize(MaxWeight: Real; MaxCost: Integer; MaxTypes: Integer)
+      : TArray<TGiftSolution>;
+  end;
+
+implementation
+
+{ TGiftSolution }
+
+function TGiftSolution.IsBetterThan(const Other: TGiftSolution;
+  MaxWeight, MaxCost: Real): Boolean;
+var
+  ThisFit, OtherFit: Boolean;
+begin
+  // Приоритет: укладывается в лимиты -> больше сахара -> меньше вес/стоимость
+  ThisFit := (TotalWeight <= MaxWeight) and (TotalCost <= MaxCost);
+  OtherFit := (Other.TotalWeight <= MaxWeight) and (Other.TotalCost <= MaxCost);
+
+  if ThisFit <> OtherFit then
+    Exit(ThisFit);
+
+  if TotalSugar <> Other.TotalSugar then
+    Exit(TotalSugar > Other.TotalSugar);
+
+  if TotalWeight <> Other.TotalWeight then
+    Exit(TotalWeight < Other.TotalWeight);
+
+  Result := TotalCost < Other.TotalCost;
+end;
+
+{ TGiftOptimizer }
+
+constructor TGiftOptimizer.Create(CandiesList: TCandysAdr;
+  MaxSolutions: Integer = 10);
+begin
+  Self.CandiesList := CandiesList;
+  FMaxSolutions := MaxSolutions;
+  FSolutions := TList<TGiftSolution>.Create(TComparer<TGiftSolution>.Construct(
+    function(const Left, Right: TGiftSolution): Integer
+    begin
+      Result := -CompareValue(Left.TotalSugar, Right.TotalSugar);
+    end));
+end;
+
+destructor TGiftOptimizer.Destroy;
+begin
+  FSolutions.Free;
+  inherited;
+end;
+
+procedure TGiftOptimizer.UpdateSolutions(const NewState: TGiftSolution;
+MaxWeight: Real; MaxCost: Integer);
+var
+  i: Integer;
+begin
+  // Добавляем только если решение лучше существующих
+  for i := 0 to FSolutions.Count - 1 do
+  begin
+    if NewState.IsBetterThan(FSolutions[i], MaxWeight, MaxCost) then
+    begin
+      FSolutions.Insert(i, NewState);
+      if FSolutions.Count > FMaxSolutions then
+        FSolutions.Delete(FSolutions.Count - 1);
+      Exit;
+    end;
+  end;
+
+  if FSolutions.Count < FMaxSolutions then
+    FSolutions.Add(NewState);
+end;
+
+function TGiftOptimizer.Optimize(MaxWeight: Real; MaxCost: Integer; MaxTypes: Integer): TArray<TGiftSolution>;
+var
+  Queue: TQueue<TGiftSolution>;
+  Current, NewState: TGiftSolution;
+  Candy: TCandysAdr;
+  MaxPerCandy: Integer;
+  NewGiftItem: TGiftItem;
+  // Добавляем временный список для хранения уникальных состояний
+  Visited: TDictionary<string, Boolean>;
+  StateKey: string;
+begin
+  Queue := TQueue<TGiftSolution>.Create;
+  Visited := TDictionary<string, Boolean>.Create;
+  try
+    // Инициализация пустого решения
+    Current.Items := TList<TGiftItem>.Create;
+    Current.UsedTypes := [];
+    Queue.Enqueue(Current);
+
+    while Queue.Count > 0 do
+    begin
+      Current := Queue.Dequeue;
+
+      // Генерация уникального ключа состояния для избежания дубликатов
+      StateKey := Format('W%.2fC%.2fS%.2f', [Current.TotalWeight, Current.TotalCost, Current.TotalSugar]);
+      if Visited.ContainsKey(StateKey) then
+        Continue;
+      Visited.Add(StateKey, True);
+
+      Candy := CandiesList;
+      while Candy <> nil do
+      begin
+        // Проверка ограничения по типам (исправлено условие)
+        if (Length(Current.UsedTypes) >= MaxTypes )then
+          if not TArray.Contains<Integer>(Current.UsedTypes, Candy^.Inf.TypeCandyKet) then
+          begin
+            Candy := Candy^.Adr;
+            Continue;
+          end;
+
+        // Расчёт максимального количества (исправлено округление)
+        MaxPerCandy := Trunc(Min(
+          (MaxWeight - Current.TotalWeight) / Candy^.Inf.Weigth,
+          (MaxCost - Current.TotalCost) / Candy^.Inf.Cost
+        ));
+
+        if MaxPerCandy > 0 then
+        begin
+          // Глубокое копирование состояния
+          NewState.TotalWeight := Current.TotalWeight;
+          NewState.TotalCost := Current.TotalCost;
+          NewState.TotalSugar := Current.TotalSugar;
+          NewState.UsedTypes := Copy(Current.UsedTypes, 0, Length(Current.UsedTypes));
+          NewState.Items := TList<TGiftItem>.Create;
+          NewState.Items.AddRange(Current.Items);
+
+          // Обновление параметров
+          NewState.TotalWeight := NewState.TotalWeight + Candy^.Inf.Weigth * MaxPerCandy;
+          NewState.TotalCost := NewState.TotalCost + Candy^.Inf.Cost * MaxPerCandy;
+          NewState.TotalSugar := NewState.TotalSugar + Candy^.Inf.Sugar * MaxPerCandy;
+
+          // Обновление типов
+          if not TArray.Contains<Integer>(NewState.UsedTypes, Candy^.Inf.TypeCandyKet) then
+          begin
+            SetLength(NewState.UsedTypes, Length(NewState.UsedTypes) + 1);
+            NewState.UsedTypes[High(NewState.UsedTypes)] := Candy^.Inf.TypeCandyKet;
+          end;
+
+          // Добавление сладости
+          NewGiftItem.CandyInfo := Candy^.Inf;
+          NewGiftItem.Quantity := MaxPerCandy;
+          NewState.Items.Add(NewGiftItem);
+
+          // Проверка ограничений и добавление в очередь
+          if (NewState.TotalWeight <= MaxWeight) and (NewState.TotalCost <= MaxCost) then
+          begin
+            Queue.Enqueue(NewState);
+            UpdateSolutions(NewState, MaxWeight, MaxCost);
+          end
+          else
+            NewState.Items.Free; // Освобождаем память при невалидном состоянии
+        end;
+        Candy := Candy^.Adr;
+      end;
+    end;
+
+    Result := FSolutions.ToArray;
+  finally
+    Queue.Free;
+    Visited.Free;
+  end;
+end;
+
+end.

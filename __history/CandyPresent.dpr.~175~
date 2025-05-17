@@ -1,0 +1,859 @@
+﻿program CandyPresent;
+
+{$APPTYPE CONSOLE}
+{$R *.res}
+
+uses
+  System.SysUtils,
+  CandyTypes in 'CandyTypes.pas',
+  Menu in 'Menu.pas',
+  FileWork in 'FileWork.pas',
+  GiftWork in 'GiftWork.pas';
+
+var
+  headCandy: TCandysAdr = nil;
+  headType: TTypeOfCandysAdr = nil;
+  pkCandy: Integer = 0;
+  pkType: Integer = 0;
+  isBeenLoad: Boolean = false;
+
+const
+  LIST_TYPES: array [0 .. 1] of string = ('Сладости', 'Типы сладостей');
+
+procedure InitializeData;
+begin
+  New(headCandy);
+  headCandy^.Adr := nil;
+  New(headType);
+  headType^.Adr := nil;
+end;
+
+procedure DisplayTypes(typesArray: TTypeOfCandysAdrs); overload;
+var
+  i: Integer;
+begin
+  ClearConsole;
+  Writeln('РЕЗУЛЬТАТЫ ПОИСКА:');
+  Writeln('┌────┬────────────────────┐');
+  Writeln('│ ID │ Название типа      │');
+  Writeln('├────┼────────────────────┤');
+
+  if Length(typesArray) = 0 then
+  begin
+    Writeln('│                          │');
+    Writeln('│     Ничего не найдено!   │');
+  end
+  else
+  begin
+    for i := 0 to High(typesArray) do
+      Writeln(Format('│%4d│%-20s│', [typesArray[i]^.Inf.PKey,
+        typesArray[i]^.Inf.Name]));
+  end;
+
+  Writeln('└────┴────────────────────┘');
+  Writeln('Всего найдено: ', Length(typesArray));
+  Readln;
+end;
+
+procedure DisplayTypes; overload;
+var
+  current: TTypeOfCandysAdr;
+begin
+  ClearConsole;
+  current := headType^.Adr;
+  if current = nil then
+  begin
+    BaseInfo(['Список типов пуст!'], 'Информация');
+    Exit;
+  end;
+
+  Writeln('┌────┬────────────────────┐');
+  Writeln('│ ID │ Название типа      │');
+  Writeln('├────┼────────────────────┤');
+  while current <> nil do
+  begin
+    Writeln(Format('│%4d│%-20s│', [current^.Inf.PKey, current^.Inf.Name]));
+    current := current^.Adr;
+  end;
+  Writeln('└────┴────────────────────┘');
+  Readln;
+end;
+
+// Добавим функцию для получения названия типа по ID
+function GetTypeName(typeId: Integer): string;
+var
+  current: TTypeOfCandysAdr;
+begin
+  current := headType^.Adr;
+  while current <> nil do
+  begin
+    if current^.Inf.PKey = typeId then
+    begin
+      Result := current^.Inf.Name;
+      Exit;
+    end;
+    current := current^.Adr;
+  end;
+  Result := 'Неизвестно';
+end;
+
+// Версия для связного списка
+procedure DisplayCandies; overload;
+var
+  current: TCandysAdr;
+  count: Integer;
+  typeName: string;
+begin
+  ClearConsole;
+  current := headCandy^.Adr;
+  if current = nil then
+  begin
+    BaseInfo(['Список сладостей пуст!'], 'Информация');
+    Exit;
+  end;
+  count := 0;
+
+  Writeln('┌────┬────────────────────┬────────────┬───────────┬────────┬────────┐');
+  Writeln('│ ID │ Название           │ Тип        │ Стоимость │ Вес    │ Сахар  │');
+  Writeln('├────┼────────────────────┼────────────┼───────────┼────────┼────────┤');
+
+  while current <> nil do
+  begin
+    Inc(count);
+    typeName := Copy(GetTypeName(current^.Inf.TypeCandyKet), 1, 12);
+    Writeln(Format('│%4d│%-20s│%-12s│%11d│%8.2f│%8.2f│', [current^.Inf.PKey,
+      current^.Inf.Name, typeName, current^.Inf.Cost, current^.Inf.Weigth,
+      current^.Inf.Sugar]));
+    current := current^.Adr;
+  end;
+
+  if count = 0 then
+  begin
+    Writeln('│                                                                    │');
+    Writeln('│                          Список пуст!                              │');
+  end;
+
+  Writeln('└────┴────────────────────┴────────────┴───────────┴────────┴────────┘');
+  Writeln('Всего записей: ', count);
+  Readln;
+end;
+
+// Версия для массива найденных элементов
+procedure DisplayCandies(candiesArray: TCandysAdrs); overload;
+var
+  i, count: Integer;
+  typeName: string;
+begin
+  count := 0;
+  ClearConsole;
+  Writeln('┌────┬────────────────────┬────────────┬───────────┬────────┬────────┐');
+  Writeln('│ ID │ Название           │ Тип        │ Стоимость │ Вес    │ Сахар  │');
+  Writeln('├────┼────────────────────┼────────────┼───────────┼────────┼────────┤');
+
+  for i := 0 to High(candiesArray) do
+  begin
+    if candiesArray[i] <> nil then
+    begin
+      Inc(count);
+      typeName := Copy(GetTypeName(candiesArray[i]^.Inf.TypeCandyKet), 1, 12);
+      Writeln(Format('│%4d│%-20s│%-12s│%11d│%8.2f│%8.2f│',
+        [candiesArray[i]^.Inf.PKey, candiesArray[i]^.Inf.Name, typeName,
+        candiesArray[i]^.Inf.Cost, candiesArray[i]^.Inf.Weigth,
+        candiesArray[i]^.Inf.Sugar]));
+    end;
+  end;
+
+  if count = 0 then
+  begin
+    Writeln('│                                                                    │');
+    Writeln('│                        Ничего не найдено!                          │');
+  end;
+  Writeln('└────┴────────────────────┴────────────┴───────────┴────────┴────────┘');
+  Writeln('Найдено записей: ', count);
+  Readln;
+end;
+
+function InputInt(prompt: string; var value: Integer): Boolean;
+var
+  str: string;
+begin
+  Write(prompt);
+  Readln(str);
+  Result := TryStrToInt(str, value);
+  if not Result then
+    BaseInfo(['Неверный формат числа!'], 'Ошибка');
+  ClearConsole;
+end;
+
+function InputFloat(prompt: string; var value: Extended): Boolean;
+var
+  str: string;
+begin
+  Write(prompt);
+  Readln(str);
+  Result := TryStrToFloat(str, value);
+  if not Result then
+    BaseInfo(['Неверный формат числа!'], 'Ошибка');
+  ClearConsole;
+end;
+
+procedure HandleAdd(listType: Integer);
+var
+  newCandy: TCandysInf;
+  newType: TTypeOfCandysInf;
+  existing: TTypeOfCandysAdrs;
+  str: String;
+  newInt: Integer;
+  ext: Extended;
+begin
+  case listType of
+    0: // Добавление конфеты
+      begin
+        if headType^.Adr = nil then
+        begin
+          BaseInfo(['Ни одного типа не существует!'], 'Ошибка');
+          Exit;
+        end;
+        ClearConsole;
+        newCandy.PKey := pkCandy;
+
+        Write('Название сладости: ');
+        Readln(newCandy.Name);
+
+        repeat
+        ClearConsole;
+          if InputInt('ID типа: ', newCandy.TypeCandyKet) then
+            headType^.Inf.PKey := newCandy.TypeCandyKet;
+          existing := Find(headType^.Adr, headType^.Inf, CompareTCPKey);
+          if (Length(existing) = 0) or (existing[0] = nil) then
+            BaseInfo(['Тип не найден!'], 'Ошибка');
+        until (Length(existing) > 0) and (existing[0] <> nil);
+
+        repeat
+        ClearConsole;
+          if InputInt('Введите стоимость: ', newInt) then
+          begin
+            if newInt >= 0 then
+            begin
+              newCandy.Cost := newInt;
+              Break;
+            end
+            else
+              BaseInfo(['Стоимость не может быть отрицательной!'], 'Ошибка');
+          end;
+        until false;
+
+        repeat
+        ClearConsole;
+          if InputFloat('Введите вес : ', ext)
+          then
+          begin
+            if ext > 0 then
+            begin
+              newCandy.Weigth := ext;
+              Break;
+            end
+            else
+              BaseInfo(['Вес должен быть положительным!'], 'Ошибка');
+          end;
+        until false;
+
+        repeat
+        ClearConsole;
+          if InputFloat('Введите содержание сахара: ', ext)
+          then
+          begin
+            if (ext >= 0) and (ext <= newCandy.Weigth) then
+            begin
+              newCandy.Sugar := ext;
+              Break;
+            end
+            else
+              BaseInfo(['Сахар должен быть в дипапазоне от 0 до веса'],
+                'Ошибка');
+          end;
+        until false;;
+        newCandy.Sugar := ext;
+        Add(headCandy, newCandy);
+        Inc(pkCandy);
+        BaseInfo(['Сладость добавлена!'], 'Успех');
+      end;
+
+    1: // Добавление типа
+      begin
+        ClearConsole;
+        newType.PKey := pkType;
+
+        repeat
+        ClearConsole;
+          Write('Название типа: ');
+          Readln(newType.Name);
+          existing := Find(headType^.Adr, newType, CompareTCName);
+          if Length(existing) > 0 then
+            BaseInfo(['Тип существует!'], 'Ошибка');
+        until Length(existing) = 0;
+
+        Add(headType, newType);
+        Inc(pkType);
+        BaseInfo(['Тип добавлен!'], 'Успех');
+      end;
+  end;
+end;
+
+procedure HandleDelete(listType: Integer);
+var
+  pk: Integer;
+begin
+  repeat
+  until InputInt('Введите ID для удаления: ', pk);
+  case listType of
+    0:
+      begin
+        headCandy^.Inf.PKey := pk;
+        if Length(Find(headCandy^.Adr, headCandy^.Inf, CompareCnPKey)) <> 0 then
+        begin
+          Delete(headCandy, pk);
+          BaseInfo(['Удаление выполнено'], 'Успех');
+        end
+        else
+          BaseInfo(['Данный элемент отсутствует в списке'], 'Ошибка');
+      end;
+    1:
+      begin
+        headType^.Inf.PKey := pk;
+        if Length(Find(headType^.Adr, headType^.Inf, CompareTCPKey)) <> 0 then
+        begin
+          headCandy^.Inf.TypeCandyKet := pk;
+          if Find(headCandy^.Adr, headCandy^.Inf,
+            CompareCnTypeCandyKet)[0] <> nil  then
+          begin
+            Delete(headType, pk);
+            BaseInfo(['Удаление выполнено'], 'Успех');
+          end
+          else
+          begin
+            BaseInfo(['Данный тип используется в списке сладостей'], 'Ошибка');
+          end;
+        end
+        else
+          BaseInfo(['Данный элемент отсутствует в списке'], 'Ошибка');
+      end;
+  end;
+
+end;
+
+procedure HandleSort(listType: Integer);
+const
+  CANDY_SORT: array [0 .. 5] of string = ('По ID', 'По имени', 'По типу',
+    'По стоимости', 'По весу', 'По сахару');
+  TYPE_SORT: array [0 .. 1] of string = ('По ID', 'По имени');
+var
+  choice: Integer;
+begin
+  case listType of
+    0:
+      begin
+        choice := BaseMenu(CANDY_SORT, 'Сортировка сладостей');
+        case choice of
+          0:
+            Sort(headCandy, CompareCnPKey);
+          1:
+            Sort(headCandy, CompareCnName);
+          2:
+            Sort(headCandy, CompareCnTypeCandyKet);
+          3:
+            Sort(headCandy, CompareCnCost);
+          4:
+            Sort(headCandy, CompareCnWeigth);
+          5:
+            Sort(headCandy, CompareCnSugar);
+        end;
+      end;
+    1:
+      begin
+        choice := BaseMenu(TYPE_SORT, 'Сортировка типов');
+        case choice of
+          0:
+            Sort(headType, CompareTCPKey);
+          1:
+            Sort(headType, CompareTCName);
+        end;
+      end;
+  end;
+  BaseInfo(['Сортировка завершена'], 'Успех');
+end;
+
+procedure HandleLoadFromFile;
+var
+  isError: Integer;
+begin
+  if isBeenLoad then
+  begin
+    BaseInfo(['Загрузка уже была совершена'], 'Запрещено')
+  end
+  else
+  begin
+    isError := LoadFromFile(headType, 'type.dcu');
+    if isError < 0 then
+      BaseInfo(['Загрузка не удалась'], 'Ошибка')
+    else
+    begin
+      pkType := isError;
+      isError := LoadFromFile(headCandy, 'candy.dcu');
+      if isError < 0 then
+        BaseInfo(['Загрузка не удалась'], 'Ошибка')
+      else
+      begin
+        BaseInfo(['Загрузка прошла успешно'], 'Успех');
+        pkCandy := isError;
+        isBeenLoad := true
+      end;
+    end;
+  end;
+end;
+
+procedure HandleSearch(listType: Integer);
+const
+  CANDY_SEARCH: array [0 .. 5] of string = ('По ID', 'По названию', 'По типу',
+    'По стоимости', 'По весу', 'По сахару');
+  TYPE_SEARCH: array [0 .. 1] of string = ('По ID', 'По названию');
+var
+  choice: Integer;
+  searchStr: string;
+  searchVal: Integer;
+  searchFloat: Extended;
+  foundCandies: TCandysAdrs;
+  foundTypes: TTypeOfCandysAdrs;
+  tempCandy: TCandysInf;
+  tempType: TTypeOfCandysInf;
+begin
+  ClearConsole;
+  case listType of
+    0: // Поиск конфет
+      begin
+        choice := BaseMenu(CANDY_SEARCH, 'Критерий поиска сладостей');
+        if choice = -1 then
+          Exit;
+
+        case choice of
+          0: // По ID
+            if InputInt('Введите ID для поиска: ', searchVal) then
+            begin
+              tempCandy.PKey := searchVal;
+              foundCandies := Find(headCandy^.Adr, tempCandy, CompareCnPKey);
+            end;
+
+          1: // По названию
+            begin
+              Write('Введите название для поиска: ');
+              Readln(searchStr);
+              tempCandy.Name := searchStr;
+              foundCandies := Find(headCandy^.Adr, tempCandy, CompareCnPartName);
+            end;
+
+            2:
+             if InputInt('Введтите ID типа для поиска: ', searchVal) then
+            begin
+              tempCandy.TypeCandyKet := searchVal;
+              foundCandies := Find(headCandy^.Adr, tempCandy, CompareCnTypeCandyKet);
+            end;
+
+
+          3: // По стоимости
+            if InputInt('Введите стоимость для поиска: ', searchVal) then
+            begin
+              tempCandy.Cost := searchVal;
+              foundCandies := Find(headCandy^.Adr, tempCandy, CompareCnCost);
+            end;
+
+          4: // По весу
+            if InputFloat('Введите вес для поиска: ', searchFloat) then
+            begin
+              tempCandy.Weigth := searchFloat;
+              foundCandies := Find(headCandy^.Adr, tempCandy, CompareCnWeigth);
+            end;
+
+          5: // По сахару
+            if InputFloat('Введите содержание сахара: ', searchFloat) then
+            begin
+              tempCandy.Sugar := searchFloat;
+              foundCandies := Find(headCandy^.Adr, tempCandy, CompareCnSugar);
+            end;
+        end;
+
+        if (Length(foundCandies) > 0) and
+          (foundCandies[Low(foundCandies)] <> nil) then
+          DisplayCandies(foundCandies)
+        else
+          BaseInfo(['Ничего не найдено'], 'Результат поиска');
+      end;
+
+    1: // Поиск типов
+      begin
+        choice := BaseMenu(TYPE_SEARCH, 'Критерий поиска типов');
+        if choice = -1 then
+          Exit;
+
+        case choice of
+          0: // По ID
+            if InputInt('Введите ID типа: ', searchVal) then
+            begin
+              tempType.PKey := searchVal;
+              foundTypes := Find(headType^.Adr, tempType, CompareTCPKey);
+            end;
+
+          1: // По названию
+            begin
+              Write('Введите название типа: ');
+              Readln(searchStr);
+              tempType.Name := searchStr;
+              foundTypes := Find(headType^.Adr, tempType, CompareTCName);
+            end;
+        end;
+
+        if Length(foundTypes) > 0 then
+          DisplayTypes(foundTypes)
+        else
+          BaseInfo(['Ничего не найдено'], 'Результат поиска');
+      end;
+  end;
+end;
+
+procedure HandleEdit(listType: Integer);
+const
+  EDIT_CANDY_MENU: array [0 .. 4] of string = ('Название', 'Тип', 'Стоимость',
+    'Вес', 'Сахар');
+
+  EDIT_TYPE_MENU: array [0 .. 0] of string = ('Название');
+var
+  pk: Integer;
+  current: TCandysAdr;
+  currentType: TTypeOfCandysAdr;
+  currentTypes: TTypeOfCandysAdrs;
+  choice: Integer;
+  newStr: string;
+  newInt: Integer;
+  newFloat: Extended;
+  tempType: TTypeOfCandysInf;
+  foundTypes: TTypeOfCandysAdrs;
+begin
+  case listType of
+    0: // Редактирование конфеты
+      begin
+        if not InputInt('Введите ID сладости для редактирования: ', pk) then
+          Exit;
+        headCandy^.Inf.PKey := pk;
+        current := Find(headCandy^.Adr, headCandy.Inf, CompareCnPKey)[0];
+
+        if current = nil then
+        begin
+          BaseInfo(['Сладость с таким ID не найдена!'], 'Ошибка');
+          Exit;
+        end;
+
+        repeat
+          ClearConsole;
+          Writeln('Текущие данные:');
+          DisplayCandies([current]);
+          choice := BaseMenu(EDIT_CANDY_MENU,
+            'Выберите параметр для изменения');
+
+          case choice of
+            0: // Изменение названия
+              begin
+                Write('Введите новое название [текущее: ',
+                  current^.Inf.Name, ']: ');
+                Readln(newStr);
+                if newStr <> '' then
+                  current^.Inf.Name := newStr;
+              end;
+
+            1: // Изменение типа
+              repeat
+                if InputInt('Введите новый ID типа [текущий: ' +
+                  IntToStr(current^.Inf.TypeCandyKet) + ']: ', newInt) then
+                begin
+                  tempType.PKey := newInt;
+                  foundTypes := Find(headType^.Adr, tempType, CompareTCPKey);
+                  if Length(foundTypes) > 0 then
+                  begin
+                    current^.Inf.TypeCandyKet := newInt;
+                    Break;
+                  end
+                  else
+                    BaseInfo(['Тип с таким ID не найден!'], 'Ошибка');
+                end;
+              until false;
+
+            2: // Изменение стоимости
+              repeat
+                if InputInt('Введите новую стоимость [текущая: ' +
+                  IntToStr(current^.Inf.Cost) + ']: ', newInt) then
+                begin
+                  if newInt >= 0 then
+                  begin
+                    current^.Inf.Cost := newInt;
+                    Break;
+                  end
+                  else
+                    BaseInfo(['Стоимость не может быть отрицательной!'],
+                      'Ошибка');
+                end;
+              until false;
+
+            3: // Изменение веса
+              repeat
+                if InputFloat('Введите новый вес [текущий: ' +
+                  FloatToStrF(current^.Inf.Weigth, ffFixed, 8, 2) + ']: ',
+                  newFloat) then
+                begin
+                  if newFloat > 0 then
+                  begin
+                    current^.Inf.Weigth := newFloat;
+                    Break;
+                  end
+                  else
+                    BaseInfo(['Вес должен быть положительным!'], 'Ошибка');
+                end;
+              until false;
+
+            4: // Изменение сахара
+              repeat
+                if InputFloat('Введите новое содержание сахара [текущее: ' +
+                  FloatToStrF(current^.Inf.Sugar, ffFixed, 8, 2) + ' г]: ',
+                  newFloat) then
+                begin
+                  if (newFloat >= 0) and (newFloat <= current^.Inf.Weigth) then
+                  begin
+                    current^.Inf.Sugar := newFloat;
+                    Break;
+                  end
+                  else
+                    BaseInfo(['Сахар должен быть в дипапазоне от 0 до веса'],
+                      'Ошибка');
+                end;
+              until false;
+            end;
+            until choice = -1;
+
+            BaseInfo(['Данные сладости успешно обновлены!'], 'Успех');
+            end;
+
+            1: // Редактирование типа
+              begin
+                if not InputInt('Введите ID типа для редактирования: ', pk) then
+                  Exit;
+                headType^.Inf.PKey := pk;
+                currentTypes := Find(headType^.Adr, headType^.Inf,
+                  CompareTCPKey);
+
+                if Length(currentTypes) = 0 then
+                begin
+                  BaseInfo(['Тип с таким ID не найден!'], 'Ошибка');
+                  Exit;
+                end;
+                currentType := currentTypes[0];
+                repeat
+                  ClearConsole;
+                  Writeln('Текущие данные:');
+                  DisplayTypes([currentType]);
+                  choice := BaseMenu(EDIT_TYPE_MENU,
+                    'Выберите параметр для изменения');
+
+                  if choice = 0 then
+                  begin
+                    repeat
+                      Write('Введите новое название [текущее: ',
+                        currentType^.Inf.Name, ']: ');
+                      Readln(newStr);
+                      if newStr = '' then
+                        Break;
+
+                      tempType.Name := newStr;
+                      foundTypes := Find(headType^.Adr, tempType,
+                        CompareTCName);
+                      if Length(foundTypes) = 0 then
+                      begin
+                        currentType^.Inf.Name := newStr;
+                        Break;
+                      end
+                      else
+                        BaseInfo(['Тип с таким именем уже существует!'],
+                          'Ошибка');
+                    until false;
+                  end;
+                until choice = -1;
+
+                BaseInfo(['Данные типа успешно обновлены!'], 'Успех');
+              end;
+          end;
+        end;
+
+        procedure HandleSaveToFile;
+        var
+          isError: Integer;
+        begin
+
+          begin
+            isError := SaveToFile(headType, 'type.dcu');
+            isError := isError + SaveToFile(headCandy, 'candy.dcu');
+            if isError < 0 then
+              BaseInfo(['Сохранение не удалась'], 'Ошибка')
+            else
+            begin
+              BaseInfo(['Сохранение прошло успешно'], 'Успех');
+              isBeenLoad := true
+            end;
+          end;
+        end;
+
+        procedure HandleListOperation(Operation: Integer);
+        var
+          listChoice: Integer;
+        begin
+          listChoice := BaseMenu(LIST_TYPES, 'Выберите список');
+          if listChoice = -1 then
+            Exit;
+
+          case Operation of
+            1:
+              case listChoice of
+                0:
+                  DisplayCandies;
+                1:
+                  DisplayTypes;
+              end;
+            2:
+              HandleSort(listChoice);
+            3:
+              HandleSearch(listChoice);
+            4:
+              HandleAdd(listChoice);
+            5:
+              HandleDelete(listChoice);
+            6:
+              HandleEdit(listChoice);
+          end;
+        end;
+
+        procedure SaveSolutionsToFile(const Solutions: TArray<TGiftSolution>;
+          const FileName: string);
+        var
+          F: TextFile;
+          Solution: TGiftSolution;
+          Item: TGiftItem;
+        begin
+          AssignFile(F, FileName);
+          try
+            Rewrite(F); // Создаём или перезаписываем файл
+            for Solution in Solutions do
+            begin
+              Writeln(F, 'Подарок:');
+              Writeln(F, 'Вес: ', Solution.TotalWeight:0:2, ' кг');
+              Writeln(F, 'Стоимость: ', Solution.TotalCost/100:0:2, ' руб');
+              Writeln(F, 'Сахар: ', Solution.TotalSugar:0:2, ' г');
+              Writeln(F, 'Состав:');
+              for Item in Solution.Items do
+                Writeln(F, ' - ', Item.CandyInfo.Name, ' x', Item.Quantity);
+              Writeln(F, '-------------------');
+            end;
+            Writeln(F, 'Сформировано подарков: ', Length(Solutions));
+          finally
+            CloseFile(F); // Закрываем файл в любом случае
+          end;
+        end;
+
+        procedure HandlePresent;
+        var
+          Optimizer: TGiftOptimizer;
+          Solutions: TArray<TGiftSolution>;
+          weight: Extended;
+          Cost, types, maxpresent: Integer;
+        begin
+          ClearConsole;
+          repeat
+          until InputFloat('Введите желаемый вес для подарка: ', weight);
+
+          repeat
+          until InputInt('Введите желаемую стоимость подарка: ', Cost);
+
+          repeat
+          until InputInt('Введите желаемое число типов сладостей: ', types);
+
+          repeat
+          until InputInt('Введите максимальное число подарков: ', maxpresent);
+
+          Optimizer := TGiftOptimizer.Create(headCandy.Adr, maxpresent);
+          try
+            Solutions := Optimizer.Optimize(weight, Cost, types);
+            ClearConsole;
+            for var Solution in Solutions do
+            begin
+              Writeln('Вес: ', Solution.TotalWeight:0:2, ' кг');
+              Writeln('Стоимость: ', Solution.TotalCost/100:0:2, ' руб');
+              Writeln('Сахар: ', Solution.TotalSugar:0:2, ' г');
+              Writeln('Состав:');
+              for var Item in Solution.Items do
+                Writeln(' - ', Item.CandyInfo.Name, ' x', Item.Quantity);
+              Writeln('-------------------');
+            end;
+          finally
+            Optimizer.Free;
+          end;
+          Readln;
+          ClearConsole;
+          SaveSolutionsToFile(Solutions, 'presents.txt');
+        end;
+
+        procedure MainMenu;
+        const
+          MAIN_MENU: array [0 .. 9] of string = ('1. Загрузить данные из файла',
+            '2. Просмотреть все записи', '3. Сортировать данные',
+            '4. Поиск записей', '5. Добавить запись', '6. Удалить запись',
+            '7. Редактировать запись', '8. Создать новогодний подарок',
+            '9. Выйти без сохранения', '10. Сохранить и выйти');
+        var
+          choice: Integer;
+
+        begin
+          repeat
+            choice := BaseMenu(MAIN_MENU, 'Главное меню');
+            case choice of
+              0:
+                HandleLoadFromFile;
+              1:
+                HandleListOperation(1); // Просмотр
+              2:
+                HandleListOperation(2); // Сортировка
+              3:
+                HandleListOperation(3); // Поиск
+              4:
+                HandleListOperation(4); // Добавление
+              5:
+                HandleListOperation(5); // Удаление
+              6:
+                HandleListOperation(6); // Редактирование
+              7:
+                HandlePresent;
+              8:
+                Exit;
+              9:
+                begin
+                  HandleSaveToFile;
+                  Exit;
+                end;
+            end;
+          until false;
+        end;
+
+        begin
+          InitializeData;
+          try
+            DrawHeader('Система управления сладостями v1.0');
+            MainMenu;
+          finally
+            Clear(headCandy);
+            Clear(headType);
+          end;
+
+end.

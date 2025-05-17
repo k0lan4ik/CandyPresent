@@ -1,19 +1,30 @@
-unit Menu;
+﻿unit Menu;
 
 interface
-  function BaseMenu(items: array of string): Integer;
-  procedure BaseInfo(items: array of string);
-  procedure ClearConsole;
+
+function BaseMenu(items: array of string; Title: string = ''): Integer;
+procedure BaseInfo(items: array of string; Title: string = 'Информация');
+procedure ClearConsole;
+procedure DrawHeader(Title: string);
+
 implementation
 
 uses
-  Windows;
+  Windows, SysUtils;
 
 var
   hConsole: THandle;
-  ConsoleWidth: Integer;
+  ConsoleSize: TCoord;
 
-  // ���������� ������� WinAPI
+const
+  COLOR_NORMAL = 7;
+  COLOR_SELECTED = 15;
+  COLOR_TITLE = 11;
+  COLOR_BORDER = 9;
+  MAX_WIDTH = 80;
+  MIN_WIDTH = 40;
+
+  // WinAPI функции
 procedure SetConsoleTextAttribute(hConsoleOutput: THandle; wAttributes: Word);
   stdcall; external 'kernel32.dll';
 function GetStdHandle(nStdHandle: DWORD): THandle; stdcall;
@@ -22,16 +33,16 @@ function GetConsoleScreenBufferInfo(hConsoleOutput: THandle;
   var lpConsoleScreenBufferInfo: CONSOLE_SCREEN_BUFFER_INFO): BOOL; stdcall;
   external 'kernel32.dll';
 
-// ��������� ������ �������
-procedure UpdateConsoleWidth;
+// Обновление размера консоли
+procedure UpdateConsoleSize;
 var
   info: CONSOLE_SCREEN_BUFFER_INFO;
 begin
   GetConsoleScreenBufferInfo(hConsole, info);
-  ConsoleWidth := info.dwSize.X;
+  ConsoleSize := info.dwSize;
 end;
 
-// ������� �������
+// Очистка консоли
 procedure ClearConsole;
 var
   coord: TCoord;
@@ -39,68 +50,120 @@ var
 begin
   coord.X := 0;
   coord.Y := 0;
-  UpdateConsoleWidth;
-  count := ConsoleWidth * 100;
+  UpdateConsoleSize;
+  count := ConsoleSize.X * ConsoleSize.Y;
   FillConsoleOutputCharacter(hConsole, ' ', count, coord, numWritten);
   SetConsoleCursorPosition(hConsole, coord);
 end;
 
-// ��������� ���� � ������ ���������� ������
-procedure DrawMenu(items: array of string; Selected: Integer);
+// Рисует горизонтальную линию
+procedure DrawHorizontalLine(Width: Integer; First, Last: Char);
 var
   i: Integer;
-  textLine: string;
-  spaces: string;
+begin
+  Write(First);
+  for i := 2 to Width - 1 do
+    Write('═');
+  Writeln(Last);
+end;
+
+// Заголовок окна
+procedure DrawWindow(Title: string; Width: Integer);
+begin
+  SetConsoleTextAttribute(hConsole, COLOR_BORDER);
+  DrawHorizontalLine(Width, '╔', '╗');
+
+  Write('║');
+  SetConsoleTextAttribute(hConsole, COLOR_TITLE);
+  Write(Format(' %-' + IntToStr(Width - 4) + 's ', [Title]));
+  SetConsoleTextAttribute(hConsole, COLOR_BORDER);
+  Writeln('║');
+
+  DrawHorizontalLine(Width, '╠', '╣');
+end;
+
+// Отрисовка меню
+procedure DrawMenu(items: array of string; Selected: Integer; Title: string);
+var
+  i, Width, MaxLen: Integer;
 begin
   ClearConsole;
+  MaxLen := Length(Title);
+  for i := 0 to High(items) do
+    if Length(items[i]) > MaxLen then
+      MaxLen := Length(items[i]);
 
-  for i := Low(items) to High(items) do
+  Width := MaxLen + 8;
+  if Width > MAX_WIDTH then
+    Width := MAX_WIDTH
+  else if Width < MIN_WIDTH then
+    Width := MIN_WIDTH;
+
+  // Заголовок
+  SetConsoleTextAttribute(hConsole, COLOR_BORDER);
+  DrawWindow(Title, Width);
+
+  // Пункты меню
+  for i := 0 to High(items) do
   begin
-    textLine := ' ' + items[i];
-    if Length(textLine) > ConsoleWidth - 1 then
-      textLine := Copy(textLine, 1, ConsoleWidth - 2) + '�';
-
-    spaces := StringOfChar(' ', ConsoleWidth - (Length(textLine) + 1));
-
+    Write('║');
     if i = Selected then
     begin
-      // ���������� ������
-      SetConsoleTextAttribute(hConsole, BACKGROUND_BLUE or
-        FOREGROUND_INTENSITY);
-      SetConsoleTextAttribute(hConsole, FOREGROUND_RED or FOREGROUND_GREEN or
-        FOREGROUND_BLUE or BACKGROUND_BLUE);
-      Write(textLine);
-      Write(spaces);
+      SetConsoleTextAttribute(hConsole, COLOR_SELECTED);
+      Write(Format('  > %-' + IntToStr(Width - 6) + 's', [items[i]]));
     end
     else
     begin
-      // ������� ������
-      SetConsoleTextAttribute(hConsole, FOREGROUND_INTENSITY or
-        FOREGROUND_RED or FOREGROUND_GREEN or FOREGROUND_BLUE);
-      Write(textLine);
-      Write(spaces);
+      SetConsoleTextAttribute(hConsole, COLOR_NORMAL);
+      Write(Format('    %-' + IntToStr(Width - 6) + 's', [items[i]]));
     end;
-    Writeln;
+    SetConsoleTextAttribute(hConsole, COLOR_BORDER);
+    Writeln('║');
   end;
 
-  // ����� ������
-  SetConsoleTextAttribute(hConsole, FOREGROUND_INTENSITY or FOREGROUND_RED or
-    FOREGROUND_GREEN or FOREGROUND_BLUE);
+  // Нижняя граница
+  DrawHorizontalLine(Width, '╚', '╝');
+  SetConsoleTextAttribute(hConsole, COLOR_NORMAL);
 end;
 
-procedure DrawInfo(items: array of string);
+// Информационное окно
+procedure DrawInfo(items: array of string; Title: string);
 var
-  i: Integer;
+  i, Width, MaxLen: Integer;
 begin
   ClearConsole;
-  for i := Low(items) to High(items) do
+  MaxLen := Length(Title);
+  for i := 0 to High(items) do
+    if Length(items[i]) > MaxLen then
+      MaxLen := Length(items[i]);
+
+  Width := MaxLen + 8;
+  if Width > MAX_WIDTH then
+    Width := MAX_WIDTH
+  else if Width < MIN_WIDTH then
+    Width := MIN_WIDTH;
+
+  // Заголовок
+  SetConsoleTextAttribute(hConsole, COLOR_BORDER);
+  DrawWindow(Title, Width);
+
+  // Текст
+  SetConsoleTextAttribute(hConsole, COLOR_NORMAL);
+  for i := 0 to High(items) do
   begin
-    Writeln(items[i]);
+    Write('║');
+    Write(Format('  %-' + IntToStr(Width - 4) + 's', [items[i]]));
+    Writeln('║');
   end;
+
+  // Нижняя граница
+  SetConsoleTextAttribute(hConsole, COLOR_BORDER);
+  DrawHorizontalLine(Width, '╚', '╝');
+  SetConsoleTextAttribute(hConsole, COLOR_NORMAL);
 end;
 
-// ��������� ������
-function ReadKey: Word;
+// Обработка клавиш
+function GetKey: Word;
 var
   InputRec: TInputRecord;
   NumRead: Cardinal;
@@ -114,56 +177,61 @@ begin
   end;
 end;
 
-function BaseMenu(items: array of string): Integer;
+// Основное меню
+function BaseMenu(items: array of string; Title: string): Integer;
 var
   SelectedItem: Integer;
+  Key: Word;
+  CharCode: Char;
 begin
   SelectedItem := 0;
   while True do
   begin
-    DrawMenu(items, SelectedItem);
-    case ReadKey of
-      VK_UP:
-        if SelectedItem > 0 then
-          Dec(SelectedItem);
-      VK_DOWN:
-        if SelectedItem < High(items) then
-          Inc(SelectedItem);
-      VK_RETURN:
-        begin
-          Result := SelectedItem;
-          Break;
-        end;
-      VK_ESCAPE:
-        begin
-          Result := -1;
-          Break;
-        end;
+    DrawMenu(items, SelectedItem, Title);
+    Key := GetKey;
+
+    // Обработка цифрового ввода через символы
+    if (Key >= Ord('0')) and (Key <= Ord('0')) then
+    begin
+      CharCode := Chr(Key);
+      Result := Ord(CharCode) - Ord('0') - 1; // Преобразуем '1' в 0, '2' в 1 и т.д.
+      if (Result >= 0) and (Result <= High(items)) then
+        Exit(Result);
+    end;
+
+    case Key of
+      VK_UP:    if SelectedItem > 0 then Dec(SelectedItem);
+      VK_DOWN:  if SelectedItem < High(items) then Inc(SelectedItem);
+      VK_ESCAPE: Exit(-1);
+      VK_RETURN: Exit(SelectedItem);
     end;
   end;
-
-  // �������������� ������
-  SetConsoleTextAttribute(hConsole, FOREGROUND_INTENSITY or FOREGROUND_RED or
-    FOREGROUND_GREEN or FOREGROUND_BLUE);
 end;
 
-procedure BaseInfo(items: array of string);
+// Информационное окно
+procedure BaseInfo(items: array of string; Title: string);
 begin
-  while True do
-  begin
-    DrawInfo(items);
-    case ReadKey of
-      VK_RETURN, VK_ESCAPE:
-        Break;
-    end;
-  end;
+  DrawInfo(items, Title);
+  Writeln(#10#13'Нажмите любую клавишу для продолжения...');
+  GetKey;
 end;
 
-
-
+// Шапка программы
+procedure DrawHeader(Title: string);
+begin
+  SetConsoleTextAttribute(hConsole, COLOR_TITLE);
+  Writeln(Format('%s', [Title]));
+  SetConsoleTextAttribute(hConsole, COLOR_BORDER);
+  DrawHorizontalLine(ConsoleSize.X, '═', '═');
+  SetConsoleTextAttribute(hConsole, COLOR_NORMAL);
+end;
 
 initialization
 
-hConsole := GetStdHandle(STD_OUTPUT_HANDLE);
+begin
+  hConsole := GetStdHandle(STD_OUTPUT_HANDLE);
+  SetConsoleTextAttribute(hConsole, COLOR_NORMAL);
+  UpdateConsoleSize;
+end;
 
 end.

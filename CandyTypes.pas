@@ -59,6 +59,7 @@ procedure Clear(var Head: TTypeOfCandysAdr); overload;
 function CompareCnPKey(const compare1, compare2: TCandysInf): Integer;
 function CompareCnTypeCandyKet(const compare1, compare2: TCandysInf): Integer;
 function CompareCnName(const compare1, compare2: TCandysInf): Integer;
+function CompareCnPartName(const compare1, compare2: TCandysInf): Integer;
 function CompareCnCost(const compare1, compare2: TCandysInf): Integer;
 function CompareCnWeigth(const compare1, compare2: TCandysInf): Integer;
 function CompareCnSugar(const compare1, compare2: TCandysInf): Integer;
@@ -102,6 +103,16 @@ begin
     Result := 0
 end;
 
+function CompareCnPartName(const compare1, compare2: TCandysInf): Integer;
+begin
+  if Pos(compare2.Name,compare1.Name) > 0 then
+    Result := 0
+  else if compare1.Name < compare2.Name then
+    Result := -1
+  else
+    Result := 1
+end;
+
 function CompareCnCost(const compare1, compare2: TCandysInf): Integer;
 begin
   if compare1.Cost > compare2.Cost then
@@ -114,9 +125,9 @@ end;
 
 function CompareCnWeigth(const compare1, compare2: TCandysInf): Integer;
 begin
-  if compare1.Name > compare2.Name then
+  if compare1.Weigth > compare2.Weigth then
     Result := 1
-  else if compare1.Name < compare2.Name then
+  else if compare1.Weigth < compare2.Weigth then
     Result := -1
   else
     Result := 0
@@ -124,9 +135,9 @@ end;
 
 function CompareCnSugar(const compare1, compare2: TCandysInf): Integer;
 begin
-  if compare1.Name > compare2.Name then
+  if compare1.Sugar > compare2.Sugar then
     Result := 1
-  else if compare1.Name < compare2.Name then
+  else if compare1.Sugar < compare2.Sugar then
     Result := -1
   else
     Result := 0
@@ -184,7 +195,7 @@ var
   Deleted, Prev: TCandysAdr;
 begin
   Deleted := Head;
-  while (Deleted^.Adr <> nil) or (Deleted^.Adr^.Inf.PKey <> PK) do
+  while (Deleted^.Adr <> nil) and (Deleted^.Adr^.Inf.PKey <> PK) do
     Deleted := Deleted^.Adr;
   if Deleted^.Adr <> nil then
   begin
@@ -342,7 +353,7 @@ begin
     end;
     Current := Current^.Adr;
   end;
-  Result[i] := nil;
+  SetLength(Result, i);
 end;
 
 // добавление в конец
@@ -350,13 +361,22 @@ procedure Add(Head: TTypeOfCandysAdr; Element: TTypeOfCandysInf); overload;
 var
   Temp: TTypeOfCandysAdr;
 begin
-  Temp := Head;
-  While Temp^.Adr <> nil do
+  if Head = nil then
+  begin
+    New(Head);
+    Head^.Inf := Element;
+    Head^.Adr := nil;
+  end
+  else
+  begin
+    Temp := Head;
+    While Temp^.Adr <> nil do
+      Temp := Temp^.Adr;
+    New(Temp^.Adr);
     Temp := Temp^.Adr;
-  New(Temp^.Adr);
-  Temp := Temp^.Adr;
-  Temp^.Inf := Element;
-  Temp^.Adr := nil;
+    Temp^.Inf := Element;
+    Temp^.Adr := nil;
+  end;
 end;
 
 // удаление
@@ -365,8 +385,10 @@ var
   Deleted, Prev: TTypeOfCandysAdr;
 begin
   Deleted := Head;
-  while (Deleted^.Adr <> nil) and (Deleted^.Adr^.Inf.PKey <> PK) do
+  while (Deleted <> nil) and (Deleted^.Adr <> nil) and
+    (Deleted^.Adr^.Inf.PKey <> PK) do
     Deleted := Deleted^.Adr;
+
   if Deleted^.Adr <> nil then
   begin
     Prev := Deleted^.Adr;

@@ -79,11 +79,11 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="FileWork.pas"/>
         <DCCReference Include="CandyTypes.pas"/>
         <DCCReference Include="Menu.pas"/>
-        <DCCReference Include="GeneratorGifts.pas"/>
+        <DCCReference Include="FileWork.pas"/>
         <DCCReference Include="GiftWork.pas"/>
+        <DCCReference Include="GiftWorkV2.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

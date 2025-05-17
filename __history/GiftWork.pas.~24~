@@ -1,0 +1,191 @@
+unit GiftWork;
+
+interface
+
+uses
+  CandyTypes, SysUtils, Math, Generics.Collections, Generics.Defaults;
+
+type
+  TGiftSolution = record
+    TotalWeight: Real;
+    TotalCost: Integer;
+    TotalSugar: Real;
+    Items: TDictionary<Integer, Integer>;
+  end;
+
+  T3DKnapsack = class
+  private
+    FCandies: TCandysAdr;
+    FMaxWeight: Real;
+    FMaxCost: Integer;
+    FMaxTypes: Integer;
+
+    FDP: array of array of array of Real;
+    FParent: array of array of array of TDictionary<Integer, Integer>;
+
+    procedure BuildDP;
+    function GetBestSolutions: TList<TGiftSolution>;
+    procedure CopyDictionary(Source, Dest: TDictionary<Integer, Integer>);
+  public
+    constructor Create(Candies: TCandysAdr; MaxWeight: Real; MaxCost, MaxTypes: Integer);
+    destructor Destroy; override;
+    function Optimize: TArray<TGiftSolution>;
+  end;
+
+implementation
+
+{ T3DKnapsack }
+
+constructor T3DKnapsack.Create(Candies: TCandysAdr; MaxWeight: Real;
+  MaxCost, MaxTypes: Integer);
+var
+  w, c, t: Integer;
+begin
+  FCandies := Candies;
+  FMaxWeight := MaxWeight;
+  FMaxCost := MaxCost;
+  FMaxTypes := MaxTypes;
+
+  SetLength(FDP, Trunc(MaxWeight) + 1, MaxCost + 1, MaxTypes + 1);
+  SetLength(FParent, Trunc(MaxWeight) + 1, MaxCost + 1, MaxTypes + 1);
+
+  for w := 0 to High(FParent) do
+    for c := 0 to High(FParent[w]) do
+      for t := 0 to High(FParent[w][c]) do
+        FParent[w][c][t] := TDictionary<Integer, Integer>.Create;
+end;
+
+destructor T3DKnapsack.Destroy;
+var
+  w, c, t: Integer;
+begin
+  for w := 0 to High(FParent) do
+    for c := 0 to High(FParent[w]) do
+      for t := 0 to High(FParent[w][c]) do
+        FParent[w][c][t].Free;
+  inherited;
+end;
+
+procedure T3DKnapsack.CopyDictionary(Source, Dest: TDictionary<Integer, Integer>);
+var
+  Key: Integer;
+begin
+  Dest.Clear;
+  for Key in Source.Keys do
+    Dest.Add(Key, Source[Key]);
+end;
+
+procedure T3DKnapsack.BuildDP;
+var
+  Candy: TCandysAdr;
+  w, c, t: Integer;
+  newW, newC, newT: Integer;
+  sugar: Real;
+  typeID, CurrentValue: Integer;
+begin
+  for w := 0 to High(FDP) do
+    for c := 0 to High(FDP[w]) do
+      for t := 0 to High(FDP[w][c]) do
+        FDP[w][c][t] := -1;
+
+  FDP[0][0][0] := 0;
+
+  Candy := FCandies;
+  while Candy <> nil do
+  begin
+    typeID := Candy^.Inf.TypeCandyKet;
+
+    for w := High(FDP) downto Trunc(Candy^.Inf.Weigth) do
+    begin
+      for c := High(FDP[w]) downto Candy^.Inf.Cost do
+      begin
+        for t := High(FDP[w][c]) downto 0 do
+        begin
+          newW := w - Trunc(Candy^.Inf.Weigth);
+          newC := c - Candy^.Inf.Cost;
+          newT := t;
+          if (newW >= 0) and (newC >= 0) and (newT >= 0) then
+          begin
+            sugar := FDP[newW][newC][newT] + Candy^.Inf.Sugar;
+            if sugar > FDP[w][c][t] then
+            begin
+              FDP[w][c][t] := sugar;
+              CopyDictionary(FParent[newW][newC][newT], FParent[w][c][t]);
+
+              if FParent[w][c][t].ContainsKey(typeID) then
+                CurrentValue := FParent[w][c][t][typeID]
+              else
+                CurrentValue := 0;
+
+              FParent[w][c][t].AddOrSetValue(typeID, CurrentValue + 1);
+            end;
+          end;
+
+          if t > 0 then
+          begin
+            newW := w - Trunc(Candy^.Inf.Weigth);
+            newC := c - Candy^.Inf.Cost;
+            newT := t - 1;
+            if (newW >= 0) and (newC >= 0) and (newT >= 0) then
+            begin
+              if not FParent[newW][newC][newT].ContainsKey(typeID) then
+              begin
+                sugar := FDP[newW][newC][newT] + Candy^.Inf.Sugar;
+                if sugar > FDP[w][c][t] then
+                begin
+                  FDP[w][c][t] := sugar;
+                  CopyDictionary(FParent[newW][newC][newT], FParent[w][c][t]);
+                  FParent[w][c][t].Add(typeID, 1);
+                end;
+              end;
+            end;
+          end;
+        end;
+      end;
+    end;
+    Candy := Candy^.Adr;
+  end;
+end;
+
+function T3DKnapsack.GetBestSolutions: TList<TGiftSolution>;
+var
+  w, c, t: Integer;
+  maxSugar: Real;
+  solution: TGiftSolution;
+begin
+  Result := TList<TGiftSolution>.Create;
+  maxSugar := -1;
+
+  for w := 0 to Trunc(FMaxWeight) do
+    for c := 0 to FMaxCost do
+      for t := 0 to FMaxTypes do
+        if FDP[w][c][t] > maxSugar then
+          maxSugar := FDP[w][c][t];
+
+  for w := 0 to Trunc(FMaxWeight) do
+    for c := 0 to FMaxCost do
+      for t := 0 to FMaxTypes do
+      begin
+        if (FDP[w][c][t] = maxSugar) and (w <= FMaxWeight) and (c <= FMaxCost) then
+        begin
+          solution.TotalWeight := w;
+          solution.TotalCost := c;
+          solution.TotalSugar := FDP[w][c][t];
+          solution.Items := TDictionary<Integer, Integer>.Create;
+          CopyDictionary(FParent[w][c][t], solution.Items);
+          Result.Add(solution);
+        end;
+      end;
+end;
+
+function T3DKnapsack.Optimize: TArray<TGiftSolution>;
+begin
+  BuildDP;
+  try
+    Result := GetBestSolutions.ToArray;
+  finally
+    GetBestSolutions.Free;
+  end;
+end;
+
+end.

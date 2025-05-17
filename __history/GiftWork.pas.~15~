@@ -1,0 +1,186 @@
+unit GiftWork;
+
+interface
+
+uses
+  CandyTypes, SysUtils, Math, Generics.Collections, Generics.Defaults;
+
+
+type
+  TGiftItem = record
+    CandyInfo: TCandysInf; // Информация о сладости
+    Quantity: Integer;     // Количество в подарке
+  end;
+
+  TGiftSolution = record
+    TotalWeight: Real;
+    TotalCost: Real;
+    TotalSugar: Real;
+    UsedTypes: TArray<Integer>;
+    Items: TList<TGiftItem>;
+    function IsBetterThan(const Other: TGiftSolution;
+      MaxWeight, MaxCost: Real): Boolean;
+  end;
+
+  TGiftOptimizer = class
+  private
+    CandiesList: TCandysAdr;
+    FMaxSolutions: Integer;
+    FSolutions: TList<TGiftSolution>;
+    procedure UpdateSolutions(const NewState: TGiftSolution; MaxWeight: Real;
+      MaxCost: Integer);
+  public
+    constructor Create(CandiesList: TCandysAdr; MaxSolutions: Integer = 10);
+    destructor Destroy; override;
+    function Optimize(MaxWeight: Real; MaxCost: Integer; MaxTypes: Integer)
+      : TArray<TGiftSolution>;
+  end;
+
+implementation
+
+{ TGiftSolution }
+
+function TGiftSolution.IsBetterThan(const Other: TGiftSolution;
+  MaxWeight, MaxCost: Real): Boolean;
+var
+  ThisFit, OtherFit: Boolean;
+begin
+  // Приоритет: укладывается в лимиты -> больше сахара -> меньше вес/стоимость
+  ThisFit := (TotalWeight <= MaxWeight) and (TotalCost <= MaxCost);
+  OtherFit := (Other.TotalWeight <= MaxWeight) and (Other.TotalCost <= MaxCost);
+
+  if ThisFit <> OtherFit then
+    Exit(ThisFit);
+
+  if TotalSugar <> Other.TotalSugar then
+    Exit(TotalSugar > Other.TotalSugar);
+
+  if TotalWeight <> Other.TotalWeight then
+    Exit(TotalWeight < Other.TotalWeight);
+
+  Result := TotalCost < Other.TotalCost;
+end;
+
+{ TGiftOptimizer }
+
+constructor TGiftOptimizer.Create(CandiesList: TCandysAdr;
+  MaxSolutions: Integer = 10);
+begin
+  Self.CandiesList := CandiesList;
+  FMaxSolutions := MaxSolutions;
+  FSolutions := TList<TGiftSolution>.Create(TComparer<TGiftSolution>.Construct(
+    function(const Left, Right: TGiftSolution): Integer
+    begin
+      Result := -CompareValue(Left.TotalSugar, Right.TotalSugar);
+    end));
+end;
+
+destructor TGiftOptimizer.Destroy;
+begin
+  FSolutions.Free;
+  inherited;
+end;
+
+procedure TGiftOptimizer.UpdateSolutions(const NewState: TGiftSolution;
+MaxWeight: Real; MaxCost: Integer);
+var
+  i: Integer;
+begin
+  // Добавляем только если решение лучше существующих
+  for i := 0 to FSolutions.Count - 1 do
+  begin
+    if NewState.IsBetterThan(FSolutions[i], MaxWeight, MaxCost) then
+    begin
+      FSolutions.Insert(i, NewState);
+      if FSolutions.Count > FMaxSolutions then
+        FSolutions.Delete(FSolutions.Count - 1);
+      Exit;
+    end;
+  end;
+
+  if FSolutions.Count < FMaxSolutions then
+    FSolutions.Add(NewState);
+end;
+
+function TGiftOptimizer.Optimize(MaxWeight: Real; MaxCost: Integer;
+MaxTypes: Integer): TArray<TGiftSolution>;
+var
+  Queue: TQueue<TGiftSolution>;
+  Current: TGiftSolution;
+  Candy: TCandysAdr;
+  NewState: TGiftSolution;
+  MaxPerCandy: Integer;
+  NewGiftItem: TGiftItem;
+begin
+  Queue := TQueue<TGiftSolution>.Create;
+  try
+    // Инициализация пустым решением
+    Current.Items := TList<TGiftItem>.Create;
+    Queue.Enqueue(Current);
+
+    while Queue.Count > 0 do
+    begin
+      Current := Queue.Dequeue;
+
+      // Перебираем все сладости
+      Candy := CandiesList;
+      while Candy <> nil do
+      begin
+        // Проверка типа
+        if (Length(Current.UsedTypes) >= MaxTypes) and
+          (not TArray.Contains<Integer>(Current.UsedTypes,
+          Candy^.Inf.TypeCandyKet)) then
+        begin
+          Candy := Candy^.Adr;
+          Continue;
+        end;
+
+        // Расчёт максимального количества
+        MaxPerCandy :=
+          Min(Floor((MaxWeight - Current.TotalWeight) / Candy^.Inf.Weigth),
+          Floor((MaxCost - Current.TotalCost) / Candy^.Inf.Cost));
+
+        for var Count := 1 to MaxPerCandy do
+        begin
+          NewState := Current;
+
+          // Обновление параметров
+          NewState.TotalWeight := NewState.TotalWeight +
+            Candy^.Inf.Weigth * Count;
+          NewState.TotalCost := NewState.TotalCost + Candy^.Inf.Cost * Count;
+          NewState.TotalSugar := NewState.TotalSugar + Candy^.Inf.Sugar * Count;
+
+          // Обновление типов  (Current.UsedTypes, Candy^.Inf.TypeCandyKet)
+          if not TArray.Contains<Integer>(NewState.UsedTypes,
+            Candy^.Inf.TypeCandyKet) then
+          begin
+            SetLength(NewState.UsedTypes, Length(NewState.UsedTypes) + 1);
+            NewState.UsedTypes[High(NewState.UsedTypes)] :=
+              Candy^.Inf.TypeCandyKet;
+          end;
+          // Добавление сладости
+
+          NewGiftItem.CandyInfo := Candy^.Inf;
+           NewGiftItem.Quantity := Count;
+          NewState.Items.Add(NewGiftItem);
+
+          // Обновление очереди и решений
+          if (NewState.TotalWeight <= MaxWeight) and
+            (NewState.TotalCost <= MaxCost) then
+          begin
+            Queue.Enqueue(NewState);
+            UpdateSolutions(NewState, MaxWeight, MaxCost);
+          end;
+        end;
+
+        Candy := Candy^.Adr;
+      end;
+    end;
+
+    Result := FSolutions.ToArray;
+  finally
+    Queue.Free;
+  end;
+end;
+
+end.
