@@ -8,7 +8,8 @@ uses
   CandyTypes in 'CandyTypes.pas',
   Menu in 'Menu.pas',
   FileWork in 'FileWork.pas',
-  GiftWork in 'GiftWork.pas';
+  GiftWork in 'GiftWork.pas',
+  GiftWorkV2 in 'GiftWorkV2.pas';
 
 var
   headCandy: TCandysAdr = nil;
@@ -179,6 +180,7 @@ var
 begin
   Write(prompt);
   Readln(str);
+  Trim(str);
   Result := TryStrToInt(str, value);
   if not Result then
     BaseInfo(['Неверный формат числа!'], 'Ошибка');
@@ -191,6 +193,7 @@ var
 begin
   Write(prompt);
   Readln(str);
+  Trim(str);
   Result := TryStrToFloat(str, value);
   if not Result then
     BaseInfo(['Неверный формат числа!'], 'Ошибка');
@@ -324,8 +327,8 @@ begin
         if Length(Find(headType^.Adr, headType^.Inf, CompareTCPKey)) <> 0 then
         begin
           headCandy^.Inf.TypeCandyKet := pk;
-          if Length(Find(headCandy^.Adr, headCandy^.Inf,
-            CompareCnTypeCandyKet)) = 0 then
+          if Find(headCandy^.Adr, headCandy^.Inf,
+            CompareCnTypeCandyKet)[0] = nil  then
           begin
             Delete(headType, pk);
             BaseInfo(['Удаление выполнено'], 'Успех');
@@ -399,7 +402,7 @@ begin
     else
     begin
       pkType := isError;
-      isError := isError + LoadFromFile(headCandy, 'candy.dcu');
+      isError := LoadFromFile(headCandy, 'candy.dcu');
       if isError < 0 then
         BaseInfo(['Загрузка не удалась'], 'Ошибка')
       else
@@ -448,8 +451,16 @@ begin
               Write('Введите название для поиска: ');
               Readln(searchStr);
               tempCandy.Name := searchStr;
-              foundCandies := Find(headCandy^.Adr, tempCandy, CompareCnName);
+              foundCandies := Find(headCandy^.Adr, tempCandy, CompareCnPartName);
             end;
+
+            2:
+             if InputInt('Введтите ID типа для поиска: ', searchVal) then
+            begin
+              tempCandy.TypeCandyKet := searchVal;
+              foundCandies := Find(headCandy^.Adr, tempCandy, CompareCnTypeCandyKet);
+            end;
+
 
           3: // По стоимости
             if InputInt('Введите стоимость для поиска: ', searchVal) then
@@ -612,7 +623,7 @@ begin
             4: // Изменение сахара
               repeat
                 if InputFloat('Введите новое содержание сахара [текущее: ' +
-                  FloatToStrF(current^.Inf.Sugar, ffFixed, 8, 2) + ' г]: ',
+                  FloatToStrF(current^.Inf.Sugar, ffFixed, 8, 2) + ' ]: ',
                   newFloat) then
                 begin
                   if (newFloat >= 0) and (newFloat <= current^.Inf.Weigth) then
@@ -733,23 +744,12 @@ begin
         var
           F: TextFile;
           Solution: TGiftSolution;
-          Item: TGiftItem;
+          Item:  TGiftItem;
         begin
           AssignFile(F, FileName);
           try
             Rewrite(F); // Создаём или перезаписываем файл
-            for Solution in Solutions do
-            begin
-              Writeln(F, 'Подарок:');
-              Writeln(F, 'Вес: ', Solution.TotalWeight:0:2, ' кг');
-              Writeln(F, 'Стоимость: ', Solution.TotalCost:0:2, ' руб');
-              Writeln(F, 'Сахар: ', Solution.TotalSugar:0:2, ' г');
-              Writeln(F, 'Состав:');
-              for Item in Solution.Items do
-                Writeln(F, ' - ', Item.CandyInfo.Name, ' x', Item.Quantity);
-              Writeln(F, '-------------------');
-            end;
-            Writeln(F, 'Сформировано подарков: ', Length(Solutions));
+
           finally
             CloseFile(F); // Закрываем файл в любом случае
           end;
@@ -775,23 +775,8 @@ begin
           repeat
           until InputInt('Введите максимальное число подарков: ', maxpresent);
 
-          Optimizer := TGiftOptimizer.Create(headCandy.Adr, maxpresent);
-          try
-            Solutions := Optimizer.Optimize(weight, Cost, types);
-            ClearConsole;
-            for var Solution in Solutions do
-            begin
-              Writeln('Вес: ', Solution.TotalWeight:0:2, ' кг');
-              Writeln('Стоимость: ', Solution.TotalCost:0:2, ' руб');
-              Writeln('Сахар: ', Solution.TotalSugar:0:2, ' г');
-              Writeln('Состав:');
-              for var Item in Solution.Items do
-                Writeln(' - ', Item.CandyInfo.Name, ' x', Item.Quantity);
-              Writeln('-------------------');
-            end;
-          finally
-            Optimizer.Free;
-          end;
+          GenerateGift(weight, types, cost, headCandy^.Adr);
+
           Readln;
           ClearConsole;
           SaveSolutionsToFile(Solutions, 'presents.txt');
@@ -849,3 +834,4 @@ begin
           end;
 
 end.
+исправь этот код для работы с новым типом

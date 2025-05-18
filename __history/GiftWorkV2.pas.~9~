@@ -1,9 +1,9 @@
-unit GiftWork;
+unit GiftWorkV2;
 
 interface
 
 uses
-  CandyTypes, SysUtils, Math;
+  CandyTypes, SysUtils;
 
 type
   PGiftItem = ^TGiftItem;
@@ -26,7 +26,7 @@ type
 
   TGiftSolutions = array of TGiftSolution;
 
-function GenerateGift(MaxWeight: Real; MaxTypes, CountGift, MaxCost: Integer;
+function GenerateGift(MaxWeight: Real; MaxTypes, MaxCost: Integer;
   headCandy: TCandysAdr): TGiftSolutions;
 
 implementation
@@ -96,50 +96,19 @@ begin
   end;
 end;
 
-
-procedure Qsort(var Data: TGiftSolutions; L, R: Integer);//; MaxWeight: Real; MaxCost: Integer);
-
-  function ComparePresent(C1, C2: TGiftSolution):Integer;
-  begin
-    Result := 0;
-    if C1.TotalSugar > C2.TotalSugar then
-      Result := 1
-    else if C1.TotalSugar < C2.TotalSugar then
-      Result := -1
-  end;
-
-  procedure QuickSort(L, R: Integer);  {рекурсивная подпрограмма-процедура}
-  var
-    I, J: Integer;
-    X, Y: TGiftSolution;
-  begin
-    I := L;
-    J := R;
-    X := Data[(L + R) div 2];
-
-
-    repeat
-      while ComparePresent(Data[I], X) = -1 do Inc(I);
-
-      while ComparePresent(Data[J], X) = 1 do Dec(J);
-
-
-      if I <= J then
-      begin
-        Y := Data[I];
-        Data[I] := Data[J];
-        Data[J] := Y;
-        Inc(I);
-        Dec(J);
-      end;
-    until I > J;
-
-    if J > L then QuickSort(L, J);
-    if I < R then QuickSort(I, R);
-  end;
-
+procedure BubbleSort(var Solutions: TGiftSolutions);
+var
+  i, j: Integer;
+  Temp: TGiftSolution;
 begin
-  QuickSort(L, R);
+  for i := 0 to High(Solutions) - 1 do
+    for j := 0 to High(Solutions) - i - 1 do
+      if Solutions[j].TotalSugar > Solutions[j + 1].TotalSugar then
+      begin
+        Temp := Solutions[j];
+        Solutions[j] := Solutions[j + 1];
+        Solutions[j + 1] := Temp;
+      end;
 end;
 
 procedure UpdateGiftItem(var Head: PGiftItem; Candy: TCandysAdr);
@@ -157,11 +126,11 @@ begin
     Current := Current^.Next;
   end;
 
+  // Если сладость не найдена, добавляем новую запись
   AddGiftItem(Head, Candy, 1);
 end;
 
-
-function GenerateGift(MaxWeight: Real; MaxTypes, CountGift, MaxCost: Integer;
+function GenerateGift(MaxWeight: Real; MaxTypes, MaxCost: Integer;
   headCandy: TCandysAdr): TGiftSolutions;
 type
   TDPState = record
@@ -171,36 +140,7 @@ type
     UsedTypes: TUsedTypes;
     Items: PGiftItem;
   end;
-
-function CompareSell(Old, New:TDPState;Candy: TCandysAdr): Integer;
 var
-  costOld,costNew: Real;
-  Temp: PGiftItem;
-begin
-  costOld := 0;
-  Temp := Old.Items;
-  while Temp <> nil do
-  begin
-    costOld := costOld + Ln(Exp(1) + Temp.Quantity);
-    Temp := Temp.Next;
-  end;
-  costNew:= 0;
-  Temp := New.Items;
-  while Temp <> nil do
-  begin
-    costNew := costNew + Ln(Exp(1) + Temp.Quantity + Ord(Temp.Candy.Inf.PKey = Candy.Inf.PKey));
-    Temp := Temp.Next;
-  end;
-  if costOld > costNew then
-    Result := -1
-  else if costOld < costNew then
-    Result := 1
-  else
-    Result := 0;
-end;
-
-
-  var
   dp: array of array of array of TDPState;
   Temp: TCandysAdr;
   t, w, c, i, j, weightInt, costInt: Integer;
@@ -214,8 +154,9 @@ end;
   CurrentCandy: TCandysAdr;
 begin
   weightInt := Round(MaxWeight * 100);
-  costInt := Round(MaxCost / 10);
+  costInt := MaxCost;
 
+  // Инициализация DP
   SetLength(dp, MaxTypes + 1, weightInt + 1, costInt + 1);
   for t := 0 to MaxTypes do
     for w := 0 to weightInt do
@@ -226,8 +167,10 @@ begin
         dp[t][w][c].Items := nil;
       end;
 
+  // Базовое состояние: 0 типов, 0 веса, 0 стоимости
   dp[0][0][0].TotalSugar := 0;
 
+  // Основной цикл: перебираем все сладости многократно (рюкзак с повторениями)
   for t := 0 to MaxTypes do
     for w := 0 to weightInt do
       for c := 0 to costInt do
@@ -238,7 +181,8 @@ begin
         CurrentCandy := headCandy;
         while CurrentCandy <> nil do
         begin
-
+          CandyWeightInt := Round(CurrentCandy^.Inf.Weigth * 100);
+          CandyCost := CurrentCandy^.Inf.Cost;
 
           newT := t;
           if not ContainsType(dp[t][w][c].UsedTypes,
@@ -251,13 +195,13 @@ begin
             Continue;
           end;
 
-          newWeight := Round((dp[t][w][c].TotalWeight + CurrentCandy^.Inf.Weigth) * 100);
-          newCost := Max((Round((dp[t][w][c].TotalCost + CurrentCandy^.Inf.Cost) / 10)),1);
+          newWeight := w + CandyWeightInt;
+          newCost := c + CandyCost;
           newSugar := dp[t][w][c].TotalSugar + CurrentCandy^.Inf.Sugar;
 
           if (newWeight <= weightInt) and (newCost <= costInt) then
           begin
-            if CompareSell(dp[newT][newWeight][newCost],dp[t][w][c],CurrentCandy) >= 0 then
+            if dp[newT][newWeight][newCost].TotalSugar < newSugar then
             begin
               dp[newT][newWeight][newCost].TotalSugar := newSugar;
               dp[newT][newWeight][newCost].TotalWeight :=
@@ -265,6 +209,7 @@ begin
               dp[newT][newWeight][newCost].TotalCost := dp[t][w][c].TotalCost +
                 CurrentCandy^.Inf.Cost;
 
+              // Обновление UsedTypes
               SetLength(newUsedTypes, Length(dp[t][w][c].UsedTypes));
               for i := 0 to High(dp[t][w][c].UsedTypes) do
                 newUsedTypes[i] := dp[t][w][c].UsedTypes[i];
@@ -277,6 +222,7 @@ begin
               end;
               dp[newT][newWeight][newCost].UsedTypes := newUsedTypes;
 
+              // Обновление Items
               dp[newT][newWeight][newCost].Items :=
                 CloneGiftItems(dp[t][w][c].Items);
               AddGiftItem(dp[newT][newWeight][newCost].Items, CurrentCandy, 1);
@@ -286,11 +232,12 @@ begin
         end;
       end;
 
+  // Сбор решений
   SolutionCount := 0;
-  SetLength(Solutions, 100);
-   t :=  MaxTypes;
-    for w := weightInt - 10 to weightInt do
-      for c := costInt - 10 to costInt do
+  SetLength(Solutions, 100); // Начальный размер буфера
+  for t := 0 to MaxTypes do
+    for w := 0 to weightInt do
+      for c := 0 to costInt do
       begin
         if dp[t][w][c].TotalSugar >= 0 then
         begin
@@ -312,9 +259,9 @@ begin
       end;
   SetLength(Solutions, SolutionCount);
 
-  Qsort(Solutions,Low(Solutions),High(Solutions));
+  // Сортировка пузырьком
+  BubbleSort(Solutions);
 
-  SetLength(Solutions, CountGift);
   Result := Solutions;
 end;
 

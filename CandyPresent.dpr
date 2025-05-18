@@ -8,8 +8,7 @@ uses
   CandyTypes in 'CandyTypes.pas',
   Menu in 'Menu.pas',
   FileWork in 'FileWork.pas',
-  GiftWork in 'GiftWork.pas',
-  GiftWorkV2 in 'GiftWorkV2.pas';
+  GiftWork in 'GiftWork.pas';
 
 var
   headCandy: TCandysAdr = nil;
@@ -224,7 +223,7 @@ begin
         Readln(newCandy.Name);
 
         repeat
-        ClearConsole;
+          ClearConsole;
           if InputInt('ID типа: ', newCandy.TypeCandyKet) then
             headType^.Inf.PKey := newCandy.TypeCandyKet;
           existing := Find(headType^.Adr, headType^.Inf, CompareTCPKey);
@@ -233,7 +232,7 @@ begin
         until (Length(existing) > 0) and (existing[0] <> nil);
 
         repeat
-        ClearConsole;
+          ClearConsole;
           if InputInt('Введите стоимость: ', newInt) then
           begin
             if newInt >= 0 then
@@ -247,9 +246,8 @@ begin
         until false;
 
         repeat
-        ClearConsole;
-          if InputFloat('Введите вес : ', ext)
-          then
+          ClearConsole;
+          if InputFloat('Введите вес : ', ext) then
           begin
             if ext > 0 then
             begin
@@ -262,9 +260,8 @@ begin
         until false;
 
         repeat
-        ClearConsole;
-          if InputFloat('Введите содержание сахара: ', ext)
-          then
+          ClearConsole;
+          if InputFloat('Введите содержание сахара: ', ext) then
           begin
             if (ext >= 0) and (ext <= newCandy.Weigth) then
             begin
@@ -288,7 +285,7 @@ begin
         newType.PKey := pkType;
 
         repeat
-        ClearConsole;
+          ClearConsole;
           Write('Название типа: ');
           Readln(newType.Name);
           existing := Find(headType^.Adr, newType, CompareTCName);
@@ -327,8 +324,8 @@ begin
         if Length(Find(headType^.Adr, headType^.Inf, CompareTCPKey)) <> 0 then
         begin
           headCandy^.Inf.TypeCandyKet := pk;
-          if Find(headCandy^.Adr, headCandy^.Inf,
-            CompareCnTypeCandyKet)[0] = nil  then
+          if Find(headCandy^.Adr, headCandy^.Inf, CompareCnTypeCandyKet)[0] = nil
+          then
           begin
             Delete(headType, pk);
             BaseInfo(['Удаление выполнено'], 'Успех');
@@ -451,16 +448,17 @@ begin
               Write('Введите название для поиска: ');
               Readln(searchStr);
               tempCandy.Name := searchStr;
-              foundCandies := Find(headCandy^.Adr, tempCandy, CompareCnPartName);
+              foundCandies := Find(headCandy^.Adr, tempCandy,
+                CompareCnPartName);
             end;
 
-            2:
-             if InputInt('Введтите ID типа для поиска: ', searchVal) then
+          2:
+            if InputInt('Введтите ID типа для поиска: ', searchVal) then
             begin
               tempCandy.TypeCandyKet := searchVal;
-              foundCandies := Find(headCandy^.Adr, tempCandy, CompareCnTypeCandyKet);
+              foundCandies := Find(headCandy^.Adr, tempCandy,
+                CompareCnTypeCandyKet);
             end;
-
 
           3: // По стоимости
             if InputInt('Введите стоимость для поиска: ', searchVal) then
@@ -739,17 +737,29 @@ begin
           end;
         end;
 
-        procedure SaveSolutionsToFile(const Solutions: TArray<TGiftSolution>;
+        procedure SaveSolutionsToFile(const Solutions: TGiftSolutions;
           const FileName: string);
         var
           F: TextFile;
-          Solution: TGiftSolution;
-          Item:  TGiftItem;
+          Item: PGiftItem;
         begin
           AssignFile(F, FileName);
           try
             Rewrite(F); // Создаём или перезаписываем файл
-
+            for var Solution in Solutions do
+          begin
+            Writeln(F,'Вес: ', Solution.TotalWeight:0:2, ' кг');
+            Writeln(F,'Стоимость: ', (Solution.TotalCost / 100):0:2, ' руб');
+            Writeln(F,'Сахар: ', Solution.TotalSugar:0:2, ' кг');
+            Writeln(F,'Состав:');
+            Item := Solution.Items;
+            while Item <> nil do
+            begin
+              Writeln(F,' - ', Item.Candy.Inf.Name, ' x', Item.Quantity);
+              Item := Item.Next;
+            end;
+            Writeln(F,'-------------------');
+          end;
           finally
             CloseFile(F); // Закрываем файл в любом случае
           end;
@@ -757,8 +767,8 @@ begin
 
         procedure HandlePresent;
         var
-          Optimizer: TGiftOptimizer;
-          Solutions: TArray<TGiftSolution>;
+          Solutions: TGiftSolutions;
+          Item: PGiftItem;
           weight: Extended;
           Cost, types, maxpresent: Integer;
         begin
@@ -775,11 +785,28 @@ begin
           repeat
           until InputInt('Введите максимальное число подарков: ', maxpresent);
 
-          GenerateGift(weight, types, cost, headCandy^.Adr);
+          Solutions := GenerateGift(weight, types, maxpresent, Cost,
+            headCandy^.Adr);
+
+          for var Solution in Solutions do
+          begin
+            Writeln('Вес: ', Solution.TotalWeight:0:2, ' кг');
+            Writeln('Стоимость: ', (Solution.TotalCost / 100):0:2, ' руб');
+            Writeln('Сахар: ', Solution.TotalSugar:0:2, ' кг');
+            Writeln('Состав:');
+            Item := Solution.Items;
+            while Item <> nil do
+            begin
+              Writeln(' - ', Item.Candy.Inf.Name, ' x', Item.Quantity);
+              Item := Item.Next;
+            end;
+            Writeln('-------------------');
+          end;
+          SaveSolutionsToFile(Solutions, 'presents.txt');
 
           Readln;
           ClearConsole;
-          SaveSolutionsToFile(Solutions, 'presents.txt');
+
         end;
 
         procedure MainMenu;
@@ -826,7 +853,7 @@ begin
         begin
           InitializeData;
           try
-            DrawHeader('Система управления сладостями v1.0');
+
             MainMenu;
           finally
             Clear(headCandy);
@@ -834,4 +861,3 @@ begin
           end;
 
 end.
-исправь этот код для работы с новым типом

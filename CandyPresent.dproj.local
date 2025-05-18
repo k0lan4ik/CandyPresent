@@ -1,22 +1,26 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
-    <Transaction>1899.12.30 00:00:00.000.527,D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas=D:\Университет\1 курс\УПОзн\CandyPresent\GeneratorGifts.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.927,D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas=D:\Университет\1 курс\УПОзн\CandyPresent\GiftWork.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.080,=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.272,D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas=D:\Университет\1 курс\УПОзн\CandyPresent\CandyTypes.pas</Transaction>
     <Transaction>1899.12.30 00:00:00.000.865,=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.272,D:\Университет\1 курс\УПОзн\CandyPresent\CandyTypes.pas=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.436,D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas=D:\Университет\1 курс\УПОзн\CandyPresent\GiftWorkV2.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.219,=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.124,D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas=D:\Университет\1 курс\УПОзн\CandyPresent\Menu.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.418,D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas=D:\Университет\1 курс\УПОзн\CandyPresent\FileWork.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.063,=D:\Университет\Delphi\Unit2.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.543,=D:\Университет\Delphi\Unit2.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.582,=D:\Университет\Delphi\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.080,=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
     <Transaction>1899.12.30 00:00:00.000.200,=D:\Университет\Delphi\Unit2.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.297,=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.954,=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.582,=D:\Университет\Delphi\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.418,D:\Университет\1 курс\УПОзн\CandyPresent\FileWork.pas=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
     <Transaction>1899.12.30 00:00:00.000.433,=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.333,D:\Университет\1 курс\УПОзн\CandyPresent\CandyPresent.dproj=D:\Университет\Delphi\Project3.dproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.954,=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.297,=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.219,=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.543,=D:\Университет\Delphi\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.333,D:\Университет\Delphi\Project3.dproj=D:\Университет\1 курс\УПОзн\CandyPresent\CandyPresent.dproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.927,D:\Университет\1 курс\УПОзн\CandyPresent\GiftWork.pas=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.527,D:\Университет\1 курс\УПОзн\CandyPresent\GeneratorGifts.pas=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.436,D:\Университет\1 курс\УПОзн\CandyPresent\GiftWorkV2.pas=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.063,=D:\Университет\Delphi\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.124,D:\Университет\1 курс\УПОзн\CandyPresent\Menu.pas=D:\Университет\1 курс\УПОзн\CandyPresent\Unit1.pas</Transaction>
+    <Transaction>2025.05.18 22:23:44.031,D:\Университет\1 курс\УПОзн\CandyPresent\GiftWork.pas=</Transaction>
+    <Transaction>2025.05.18 22:23:56.843,D:\Университет\1 курс\УПОзн\CandyPresent\GiftWork.pas=D:\Университет\1 курс\УПОзн\CandyPresent\GiftWorkV2.pas</Transaction>
+    <Transaction>2025.05.18 22:23:56.876,D:\Университет\1 курс\УПОзн\CandyPresent\GiftWorkV2.pas=D:\Университет\1 курс\УПОзн\CandyPresent\GiftWork.pas</Transaction>
+    <Transaction>2025.05.18 22:26:46.421,D:\Университет\1 курс\УПОзн\CandyPresent\GiftWork.pas=D:\Университет\1 курс\УПОзн\CandyPresent\GiftWorkV2.pas</Transaction>
   </Transactions>
 </BorlandProject>
